@@ -24,4 +24,21 @@
     </nav>
 
 </body>
-</html># Nexus
+</html>
+
+
+
+<script>
+        function showPage(pageName) {
+            // 第一步：不管三七二十一，先把兩個分頁都先隱藏起來
+            document.getElementById('calendar-page').style.display = 'none';
+            document.getElementById('weekly-page').style.display = 'none';
+
+            // 第二步：看按鈕傳了什麼名字進來，就把那個分頁打開
+            if (pageName === 'calendar') {
+                document.getElementById('calendar-page').style.display = 'block';
+            } else if (pageName === 'weekly') {
+                document.getElementById('weekly-page').style.display = 'block';
+            }
+        }
+    </script>

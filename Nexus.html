@@ -86,6 +86,24 @@
 
 
 <script>
+    
+        // 當網頁一載入完成時，開始倒數
+        window.onload = function() {
+            
+            // 設定計時器：2000 毫秒 (也就是 2 秒) 後執行動作
+            setTimeout(function() {
+                // 動作 1：把布幕的透明度變成 0 (搭配 CSS 做出淡出效果)
+                document.getElementById('splash-screen').style.opacity = '0';
+                
+                // 動作 2：等淡出動畫跑完 (約 0.8 秒) 後，把布幕徹底移走，才不會擋住後面畫面
+                setTimeout(function() {
+                    document.getElementById('splash-screen').style.display = 'none';
+                }, 800); 
+
+            }, 2000); // 如果你覺得 2 秒太短，可以改成 3000 (3秒) 或 4000 (4秒)
+        };
+
+    
         function showPage(pageName) {
             // 第一步：不管三七二十一，先把兩個分頁都先隱藏起來
             document.getElementById('calendar-page').style.display = 'none';

@@ -7,6 +7,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <style>
+        #splash-screen {
+    /* 1. 基本定位：蓋住全螢幕 */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;  /* 寬度 100% 螢幕寬 */
+    height: 100vh; /* 高度 100% 螢幕高 */
+    
+    /* 2. 背景設定：把你的圖貼上來 */
+    background-color: #000000; /* 圖片載入前，先墊一個純黑底 */
+    background-image: url('splash_logo.png'); /* 召喚你的圖片！(檔名必須完全一樣) */
+    background-position: center; /* 讓圖片永遠保持在正中央 */
+    background-repeat: no-repeat; /* 圖片不重複拼貼 */
+    background-size: contain; /* 關鍵魔法：讓圖片自動縮放，保證完整顯示不被切掉 */
+    
+    /* 3. 動畫與圖層 */
+    z-index: 9999; /* 數字設超大，確保它蓋在所有東西最上面 */
+    transition: opacity 0.8s ease; /* 之後讓它淡出消失的動畫時間 */
+}
+
+        
         /* 讓整個網頁貼齊螢幕，清除預設的白邊 */
         body {
             margin: 0;
@@ -41,7 +62,7 @@
     </style>
 </head>
 <body>
-
+    <div id="splash-screen"></div>  
     <div id="app">
         <section id="calendar-page">
             <h1>行事曆</h1>

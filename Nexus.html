@@ -238,7 +238,7 @@
 
         .local-item {
             font-size: 14px; color: #555; padding: 6px 10px; margin-bottom: 6px;
-            background: #fffbe6; /* 💡 淡淡的便利貼黃色 */
+            background: #AAC0E1;
             border-left: 3px solid #feca57;
             border-radius: 4px; cursor: pointer; transition: 0.2s;
         }
@@ -276,6 +276,24 @@
             </div>
         </section>
 
+        <section id="input-page" class="page" style="display:none; padding: 20px;">
+    <h2 style="color: white; margin-bottom: 20px;">✍️ 新增活動</h2>
+    
+    <div class="input-card" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px;">
+        <label style="color: #ccc; display: block; margin-bottom: 8px;">選擇日期：</label>
+        <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: none; margin-bottom: 20px;">
+        <label style="color: #ccc; display: block; margin-bottom: 8px;">活動內容：</label>
+        <div class="color-picker" style="display: flex; gap: 15px; margin-bottom: 25px;">
+             <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectColor('#0A1931', this)"></div>
+                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectColor('#B3CFE5', this)"></div>
+                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectColor('#4A7FA7', this)"></div>
+                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectColor('#1A3D63', this)"></div>
+        </div>
+
+        <button onclick="saveFromInputPage()" style="width: 100%; padding: 15px; background: #007bb5; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px;">確認新增活動</button>
+    </div>
+</section>
+
        <section id="weekly-page" style="display: none;">
             <h2 style"margin-top:0;">Weekly Task</h2>
             
@@ -285,6 +303,7 @@
 
     <nav id="bottom-nav">
         <button onclick="showPage('calendar')">行事曆</button>
+        <button onclick="showPage('input')">活動列表</button>
         <button onclick="showPage('weekly')">本週事務</button>
     </nav>
 
@@ -452,62 +471,20 @@
                                 // 存檔並重新畫日曆
                                 localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
                                 generateCalendar(); 
+                                generateWeeklyView();
                             }
                         };
 
                         cell.appendChild(taskDiv);
                     });
                 }
-                // 點擊格子，開啟自訂的任務輸入卡片
-                cell.onclick = function() {
-                    openModal(dateKey);
-                };
+               
 
                 calendarBody.appendChild(cell);
             }
         }
 
-        // ==========================================
-        // 5. 專屬任務輸入卡片控制模組
-        // ==========================================
-        function openModal(dateKey) {
-            currentEditingDate = dateKey;
-            document.getElementById('task-modal').style.display = 'flex';
-            document.getElementById('task-input').value = ''; 
-            document.getElementById('task-input').focus(); 
-        }
-
-        function closeModal() {
-            document.getElementById('task-modal').style.display = 'none';
-        }
-
-        function selectColor(color, element) {
-            selectedTaskColor = color;
-            let circles = document.querySelectorAll('.color-circle');
-            circles.forEach(c => c.classList.remove('selected'));
-            element.classList.add('selected');
-        }
-
-        function saveTask() {
-            let taskText = document.getElementById('task-input').value.trim();
-            if (!taskText) {
-                alert("請輸入內容！");
-                return;
-            }
-
-            if (!savedTasks[currentEditingDate]) {
-                savedTasks[currentEditingDate] = [];
-            }
-            
-            // 把文字和顏色一起存起來
-            savedTasks[currentEditingDate].push({ text: taskText, color: selectedTaskColor });
-            localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-
-            closeModal();
-            generateCalendar(); 
-            generateWeeklyView();
-        }
-
+      //5.已刪除
         // ==========================================
         // 6. 頁面切換模組
         // ==========================================

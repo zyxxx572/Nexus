@@ -16,7 +16,7 @@
     height: 100vh; /* 高度 100% 螢幕高 */
     
     /* 2. 背景設定：把你的圖貼上來 */
-    background-color: #000000; /* 圖片載入前，先墊一個純黑底 */
+    background-color: #0E1118; /* 圖片載入前，先墊一個純黑底 */
     background-image: url('splash_logo.png'); /* 召喚你的圖片！(檔名必須完全一樣) */
     background-position: center; /* 讓圖片永遠保持在正中央 */
     background-repeat: no-repeat; /* 圖片不重複拼貼 */
@@ -134,6 +134,55 @@
             font-weight: bold;
             margin: 0 4px;
         }
+
+        /* --- 專屬輸入卡片樣式 --- */
+        .modal-overlay {
+            display: none; /* 預設隱藏 */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* 半透明黑底，讓背景變暗 */
+            backdrop-filter: blur(3px); /* 背景模糊化，超有質感！ */
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+
+        .modal-content {
+            background: white; padding: 20px; border-radius: 12px; 
+            width: 80%; max-width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.3s ease-out; /* 彈出動畫 */
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #task-input {
+            width: 100%; padding: 10px; border: 1px solid #ddd;
+            border-radius: 8px; font-size: 16px; margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        .color-picker { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; }
+        
+        .color-circle {
+            width: 30px; height: 30px; border-radius: 50%; 
+            cursor: pointer; border: 3px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        /* 被選中時的特效 */
+        .color-circle.selected {
+            border-color: #333; 
+            transform: scale(1.2);
+        }
+
+        .modal-buttons { display: flex; gap: 10px; }
+        .modal-buttons button {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .btn-cancel { background: #f1f1f1; color: #666; }
+        .btn-save { background: #007bb5; color: white; }
     </style>
 </head>
 <body>
@@ -178,13 +227,43 @@
         <button onclick="showPage('weekly')">當週事項</button>
     </nav>
 
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top: 0; color: #333;">新增</h3>
+            
+            <input type="text" id="task-input" placeholder="輸入活動..." autocomplete="off">
+            
+            <div class="color-picker">
+                <div class="color-circle selected" style="background-color: #007bb5;" onclick="selectColor('#007bb5', this)"></div>
+                <div class="color-circle" style="background-color: #ff6b6b;" onclick="selectColor('#ff6b6b', this)"></div>
+                <div class="color-circle" style="background-color: #feca57;" onclick="selectColor('#feca57', this)"></div>
+                <div class="color-circle" style="background-color: #1dd1a1;" onclick="selectColor('#1dd1a1', this)"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-save" onclick="saveTask()">確認</button>
+            </div>
+        </div>
+    </div>
 
 
 
 
 <script>
-        // --- 1. 啟動畫面淡出魔法 ---
+        // ==========================================
+        // 1. 全域變數 (系統記憶體)
+        // ==========================================
+        let countdownInterval; 
+        let savedTasks = JSON.parse(localStorage.getItem("nexusTasks")) || {};
+        let currentEditingDate = null; 
+        let selectedTaskColor = '#007bb5'; 
+
+        // ==========================================
+        // 2. 系統啟動設定 (網頁載入時執行)
+        // ==========================================
         window.onload = function() {
+            // 啟動畫面淡出魔法
             setTimeout(function() {
                 document.getElementById('splash-screen').style.opacity = '0';
                 setTimeout(function() {
@@ -192,22 +271,19 @@
                 }, 800); 
             }, 2000);
 
-            // 💡 網頁一載入，就去問瀏覽器「上次存的日期是什麼？」
-            // 如果沒存過，就預設給 "2026-05-20"
+            // 啟動倒數計時器
             const savedDate = localStorage.getItem("examDate") || "2026-05-20";
             startCountdown(savedDate);
-            
-            // 🚀 網頁載入時，呼叫生成日曆的功能！
+
+            // 生成行事曆
             generateCalendar();
         };
 
-
-        // --- 2. 倒數計時器齒輪 ---
-        let countdownInterval; // 準備一個變數來裝計時器
-
+        // ==========================================
+        // 3. 段考倒數計時器模組
+        // ==========================================
         function startCountdown(targetDateStr) {
-            clearInterval(countdownInterval); // 每次啟動前，先把舊的計時器捏死，避免時間亂跳
-            
+            clearInterval(countdownInterval); 
             const countDownDate = new Date(targetDateStr + "T00:00:00").getTime();
 
             countdownInterval = setInterval(function() {
@@ -236,37 +312,21 @@
             }, 1000);
         }
 
-        // --- 3. 點擊面板，重新設定日期的功能 ---
         function setNewExamDate() {
-            // 彈出視窗讓使用者輸入
             const newDate = prompt("請輸入下次段考日期\n(格式必須是 YYYY-MM-DD，例如 2026-06-30)：", "2026-05-20");
-            
             if (newDate) {
-                // 簡單檢查一下格式對不對
                 if (!isNaN(new Date(newDate).getTime())) {
-                    localStorage.setItem("examDate", newDate); // 把新日期存進瀏覽器的記憶體裡！
-                    startCountdown(newDate); // 用新日期重新啟動計時器
+                    localStorage.setItem("examDate", newDate); 
+                    startCountdown(newDate); 
                 } else {
                     alert("日期格式怪怪的喔！請照著 YYYY-MM-DD 的格式輸入。");
                 }
             }
         }
 
-        // --- 4. 分頁切換功能 (原本的) ---
-        function showPage(pageName) {
-            document.getElementById('calendar-page').style.display = 'none';
-            document.getElementById('weekly-page').style.display = 'none';
-
-            if (pageName === 'calendar') {
-                document.getElementById('calendar-page').style.display = 'block';
-            } else if (pageName === 'weekly') {
-                document.getElementById('weekly-page').style.display = 'block';
-            }
-        }
-   // 🚀 新增：讀取記憶體中的代辦事項。如果沒有，就給一個空字典 {}
-        let savedTasks = JSON.parse(localStorage.getItem("nexusTasks")) || {};
-
-        // --- 5. 自動生成四週滾動日曆 (升級任務版) ---
+        // ==========================================
+        // 4. 四週滾動日曆生成模組
+        // ==========================================
         function generateCalendar() {
             const calendarBody = document.getElementById('calendar-body');
             calendarBody.innerHTML = ''; 
@@ -281,54 +341,97 @@
             for (let i = 0; i < 28; i++) {
                 let cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
-
-                // 產生一個專屬這天的「記憶鑰匙」(例如 "2026-5-1")
                 let dateKey = `${cellDate.getFullYear()}-${cellDate.getMonth() + 1}-${cellDate.getDate()}`;
 
                 let cell = document.createElement('div');
                 cell.className = 'day-cell';
                 
-                // 放上日期數字
                 let dateLabel = document.createElement('div');
                 dateLabel.innerText = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
                 cell.appendChild(dateLabel);
 
-                // 💡 如果是「今天」，給它特別的顏色
                 if (cellDate.toDateString() === today.toDateString()) {
                     cell.style.backgroundColor = '#e0f7fa'; 
                     cell.style.border = '2px solid #007bb5'; 
                     dateLabel.style.color = '#007bb5';
                 }
 
-                // 🚀 把這天存過的任務，變成小標籤貼上去！
+                // 讀取這天的任務並顯示
                 if (savedTasks[dateKey]) {
-                    savedTasks[dateKey].forEach(taskText => {
+                    savedTasks[dateKey].forEach(taskObj => {
                         let taskDiv = document.createElement('div');
                         taskDiv.className = 'task-item';
-                        taskDiv.innerText = taskText;
+                        
+                        // 相容舊資料與新資料 (文字+顏色)
+                        let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
+                        let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
+
+                        taskDiv.innerText = text;
+                        taskDiv.style.borderLeft = `4px solid ${color}`; // 顯示你選的顏色
                         cell.appendChild(taskDiv);
                     });
                 }
 
-                // 🚀 綁定點擊事件：點擊格子就可以新增任務
+                // 點擊格子，開啟自訂的任務輸入卡片
                 cell.onclick = function() {
-                    let newTask = prompt(`請輸入 ${cellDate.getMonth() + 1}/${cellDate.getDate()} 的待辦事項：\n(按取消可放棄)`);
-                    
-                    if (newTask) { // 如果有輸入內容
-                        // 如果這天還沒有任務名單，就幫它建一個空陣列
-                        if (!savedTasks[dateKey]) {
-                            savedTasks[dateKey] = [];
-                        }
-                        // 把新任務塞進去
-                        savedTasks[dateKey].push(newTask);
-                        // 存進瀏覽器的記憶體裡
-                        localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-                        // 重新畫一次日曆，讓新任務立刻顯示出來！
-                        generateCalendar(); 
-                    }
+                    openModal(dateKey);
                 };
 
                 calendarBody.appendChild(cell);
+            }
+        }
+
+        // ==========================================
+        // 5. 專屬任務輸入卡片控制模組
+        // ==========================================
+        function openModal(dateKey) {
+            currentEditingDate = dateKey;
+            document.getElementById('task-modal').style.display = 'flex';
+            document.getElementById('task-input').value = ''; 
+            document.getElementById('task-input').focus(); 
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').style.display = 'none';
+        }
+
+        function selectColor(color, element) {
+            selectedTaskColor = color;
+            let circles = document.querySelectorAll('.color-circle');
+            circles.forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function saveTask() {
+            let taskText = document.getElementById('task-input').value.trim();
+            if (!taskText) {
+                alert("請輸入內容喔！");
+                return;
+            }
+
+            if (!savedTasks[currentEditingDate]) {
+                savedTasks[currentEditingDate] = [];
+            }
+            
+            // 把文字和顏色一起存起來
+            savedTasks[currentEditingDate].push({ text: taskText, color: selectedTaskColor });
+            localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+
+            closeModal();
+            generateCalendar(); 
+        }
+
+        // ==========================================
+        // 6. 頁面切換模組
+        // ==========================================
+        function showPage(pageName) {
+            document.getElementById('calendar-page').style.display = 'none';
+            document.getElementById('weekly-page').style.display = 'none';
+
+            if (pageName === 'calendar') {
+                document.getElementById('calendar-page').style.display = 'block';
+            } else if (pageName === 'weekly') {
+                document.getElementById('weekly-page').style.display = 'block';
             }
         }
     </script>

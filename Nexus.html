@@ -77,18 +77,32 @@
        .day-cell {
             background-color: white;
             border-radius: 8px;
-            
-            /* 🚀 修改這裡：把高度從 70px 加高到 95px */
             height: 90px; 
-            
-            /* 🚀 修改這裡：把內邊距跟字體稍微放大，讓數字不會顯得太小 */
             padding: 8px;
             font-size: 16px; 
-            
             font-weight: bold;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            /* 🚀 新增：滑鼠移過去變手指，並隱藏超出的內容 */
+            cursor: pointer; 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* 元素之間的間距 */
         }
 
+        /* 🚀 新增：待辦事項的小標籤設計 */
+        .task-item {
+            background-color: #f0f4f8; /* 淡淡的灰藍色 */
+            color: #333;
+            font-size: 11px; /* 字體縮小，才塞得進格子 */
+            font-weight: normal;
+            padding: 3px 5px;
+            border-radius: 4px;
+            border-left: 3px solid #007bb5; /* 左邊加一條冰藍色裝飾線 */
+            white-space: nowrap; /* 不換行 */
+            overflow: hidden; /* 超出隱藏 */
+            text-overflow: ellipsis; /* 超出的字變成 ... */
+        }
          /* --- 倒數計時儀表板 (白底質感版) --- */
         .countdown-box {
             margin-top: 25px;
@@ -249,40 +263,71 @@
                 document.getElementById('weekly-page').style.display = 'block';
             }
         }
-    // --- 5. 自動生成四週滾動日曆 ---
+   // 🚀 新增：讀取記憶體中的代辦事項。如果沒有，就給一個空字典 {}
+        let savedTasks = JSON.parse(localStorage.getItem("nexusTasks")) || {};
+
+        // --- 5. 自動生成四週滾動日曆 (升級任務版) ---
         function generateCalendar() {
             const calendarBody = document.getElementById('calendar-body');
-            calendarBody.innerHTML = ''; // 確保盆子是空的
+            calendarBody.innerHTML = ''; 
 
             const today = new Date();
-            
-            // 找出這週的星期一在哪裡 (電腦預設星期天是 0，星期一是 1)
             let dayOfWeek = today.getDay();
             let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
 
-            // 設定第一格的起始日期為「本週一」
             let startDate = new Date(today);
             startDate.setDate(today.getDate() - distanceToMonday);
 
-            // 開始連續生產 28 天的格子 (4週 x 7天)
             for (let i = 0; i < 28; i++) {
                 let cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
 
+                // 產生一個專屬這天的「記憶鑰匙」(例如 "2026-5-1")
+                let dateKey = `${cellDate.getFullYear()}-${cellDate.getMonth() + 1}-${cellDate.getDate()}`;
+
                 let cell = document.createElement('div');
                 cell.className = 'day-cell';
                 
-                // 把日期寫進去，格式變成 "月/日" (例如 5/1)
-                cell.innerHTML = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
+                // 放上日期數字
+                let dateLabel = document.createElement('div');
+                dateLabel.innerText = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
+                cell.appendChild(dateLabel);
 
-                // 💡 貼心魔法：如果是「今天」，給它特別的顏色，讓你在 28 格中一眼看到自己在哪！
+                // 💡 如果是「今天」，給它特別的顏色
                 if (cellDate.toDateString() === today.toDateString()) {
-                    cell.style.backgroundColor = '#e0f7fa'; // 淡淡的冰藍色底
-                    cell.style.border = '2px solid #007bb5'; // 加粗藍色邊框
-                    cell.style.color = '#007bb5';
+                    cell.style.backgroundColor = '#e0f7fa'; 
+                    cell.style.border = '2px solid #007bb5'; 
+                    dateLabel.style.color = '#007bb5';
                 }
 
-                // 把做好的格子丟進盆子裡
+                // 🚀 把這天存過的任務，變成小標籤貼上去！
+                if (savedTasks[dateKey]) {
+                    savedTasks[dateKey].forEach(taskText => {
+                        let taskDiv = document.createElement('div');
+                        taskDiv.className = 'task-item';
+                        taskDiv.innerText = taskText;
+                        cell.appendChild(taskDiv);
+                    });
+                }
+
+                // 🚀 綁定點擊事件：點擊格子就可以新增任務
+                cell.onclick = function() {
+                    let newTask = prompt(`請輸入 ${cellDate.getMonth() + 1}/${cellDate.getDate()} 的待辦事項：\n(按取消可放棄)`);
+                    
+                    if (newTask) { // 如果有輸入內容
+                        // 如果這天還沒有任務名單，就幫它建一個空陣列
+                        if (!savedTasks[dateKey]) {
+                            savedTasks[dateKey] = [];
+                        }
+                        // 把新任務塞進去
+                        savedTasks[dateKey].push(newTask);
+                        // 存進瀏覽器的記憶體裡
+                        localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+                        // 重新畫一次日曆，讓新任務立刻顯示出來！
+                        generateCalendar(); 
+                    }
+                };
+
                 calendarBody.appendChild(cell);
             }
         }

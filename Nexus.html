@@ -276,26 +276,30 @@
             </div>
         </section>
 
-        <section id="input-page" class="page" style="display:none; padding: 20px;">
-    <h2 style="color: white; margin-bottom: 20px;">✍️ 新增活動</h2>
-    
-    <div class="input-card" style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px;">
-        <label style="color: #ccc; display: block; margin-bottom: 8px;">選擇日期：</label>
-        <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: none; margin-bottom: 20px;">
-        <label style="color: #ccc; display: block; margin-bottom: 8px;">活動內容：</label>
-        <div class="color-picker" style="display: flex; gap: 15px; margin-bottom: 25px;">
-             <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectColor('#0A1931', this)"></div>
-                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectColor('#B3CFE5', this)"></div>
-                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectColor('#4A7FA7', this)"></div>
-                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectColor('#1A3D63', this)"></div>
-        </div>
+      <section id="input-page" class="page" style="display:none; padding: 20px;">
+            <h2 style="color: #333; margin-top:0; margin-bottom: 20px;">✍️ 新增活動</h2>
+            
+            <div class="input-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">選擇日期：</label>
+                <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-sizing: border-box;">
+                
+                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">活動內容：</label>
+                <textarea id="global-task-input" placeholder="請輸入活動..." style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-sizing: border-box;"></textarea>
+                
+                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">標記顏色：</label>
+                <div class="color-picker" style="display: flex; gap: 15px; margin-bottom: 25px;">
+                     <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectGlobalColor('#0A1931', this)"></div>
+                     <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectGlobalColor('#B3CFE5', this)"></div>
+                     <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectGlobalColor('#4A7FA7', this)"></div>
+                     <div class="color-circle" style="background-color: #1A3D63;" onclick="selectGlobalColor('#1A3D63', this)"></div>
+                </div>
 
-        <button onclick="saveFromInputPage()" style="width: 100%; padding: 15px; background: #007bb5; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px;">確認新增活動</button>
-    </div>
-</section>
+                <button onclick="saveFromInputPage()" style="width: 100%; padding: 15px; background: #007bb5; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">確認新增活動</button>
+            </div>
+        </section>
 
        <section id="weekly-page" style="display: none;">
-            <h2 style"margin-top:0;">Weekly Task</h2>
+            <h2 style="margin-top:0;">Weekly Task</h2>
             
             <div id="weekly-container"></div>
         </section>
@@ -306,29 +310,6 @@
         <button onclick="showPage('input')">活動列表</button>
         <button onclick="showPage('weekly')">本週事務</button>
     </nav>
-
-    <div id="task-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="margin-top: 0; color: #333;">新增</h3>
-            
-            <input type="text" id="task-input" placeholder="輸入活動..." autocomplete="off">
-            
-            <div class="color-picker">
-                <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectColor('#0A1931', this)"></div>
-                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectColor('#B3CFE5', this)"></div>
-                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectColor('#4A7FA7', this)"></div>
-                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectColor('#1A3D63', this)"></div>
-            </div>
-
-            <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeModal()">取消</button>
-                <button class="btn-save" onclick="saveTask()">確認</button>
-            </div>
-        </div>
-    </div>
-
-
-
 
 <script>
         // ==========================================
@@ -525,19 +506,24 @@ function saveFromInputPage() {
     generateWeeklyView();
     
     // 自動跳轉回第一頁看結果
-    showPage('calendar-page');
+    showPage('calendar');
 }
-        // ==========================================
+      // ==========================================
         // 6. 頁面切換模組
         // ==========================================
         function showPage(pageName) {
+            // 先把三個頁面都隱藏
             document.getElementById('calendar-page').style.display = 'none';
             document.getElementById('weekly-page').style.display = 'none';
+            document.getElementById('input-page').style.display = 'none';
 
+            // 根據按下的按鈕，顯示對應的頁面
             if (pageName === 'calendar') {
                 document.getElementById('calendar-page').style.display = 'block';
             } else if (pageName === 'weekly') {
                 document.getElementById('weekly-page').style.display = 'block';
+            } else if (pageName === 'input') {
+                document.getElementById('input-page').style.display = 'block';
             }
         }
    // ==========================================

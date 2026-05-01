@@ -484,7 +484,49 @@
             }
         }
 
-      //5.已刪除
+      //5.
+
+    let globalSelectedColor = '#007bb5'; // 預設顏色
+
+// 1. 讓第三頁能選顏色
+function selectGlobalColor(color, element) {
+    globalSelectedColor = color;
+    document.querySelectorAll('#input-page .color-circle').forEach(el => el.style.border = "none");
+    element.style.border = "2px solid white";
+}
+
+// 2. 第三頁的儲存功能
+function saveFromInputPage() {
+    let dateVal = document.getElementById('global-date-input').value; // 格式是 YYYY-MM-DD
+    let taskText = document.getElementById('global-task-input').value.trim();
+
+    if (!dateVal || !taskText) {
+        alert("日期和內容都要填喔！");
+        return;
+    }
+
+    // 將日期格式從 2024-05-08 轉成日曆用的 5-8
+    let dateParts = dateVal.split('-');
+    let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
+
+    // 存入資料庫
+    if (!savedTasks[dateKey]) {
+        savedTasks[dateKey] = [];
+    }
+    savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
+    localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+
+    // 清空輸入框
+    document.getElementById('global-task-input').value = "";
+    alert("任務已同步到戰術面板！");
+
+    // 重新整理所有頁面
+    generateCalendar();
+    generateWeeklyView();
+    
+    // 自動跳轉回第一頁看結果
+    showPage('calendar-page');
+}
         // ==========================================
         // 6. 頁面切換模組
         // ==========================================

@@ -88,6 +88,66 @@
             font-weight: bold;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
         }
+
+           /* --- 倒數計時儀表板 --- */
+
+        .countdown-box {
+
+            margin-top: 25px; /* 跟上面的日曆拉開一點距離 */
+
+            background-color: #1e1e1e; /* 深色背景，突顯科技感 */
+
+            color: white;
+
+            border-radius: 12px;
+
+            padding: 20px;
+
+            text-align: center;
+
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 加點陰影讓它浮起來 */
+
+        }
+
+
+
+        .countdown-title {
+
+            font-size: 14px;
+
+            color: #88c0d0; /* 冰藍色字體，呼應你的 N 啟動圖騰！ */
+
+            margin-bottom: 10px;
+
+            letter-spacing: 2px; /* 讓字距拉開一點，看起來更高級 */
+
+            font-weight: bold;
+
+        }
+
+
+
+        .countdown-time {
+
+            font-size: 18px; /* 「天、時、分」的字體大小 */
+
+            color: #aaaaaa;
+
+        }
+
+
+
+        .countdown-time span {
+
+            font-size: 32px; /* 數字特別放大！ */
+
+            color: #ffffff;  /* 數字用純白，對比更強烈 */
+
+            font-weight: bold;
+
+            margin: 0 4px;
+
+        }
     </style>
 </head>
 <body>
@@ -111,6 +171,22 @@
 
                 <div class="day-cell">22</div><div class="day-cell">23</div><div class="day-cell">24</div>
                 <div class="day-cell">25</div><div class="day-cell">26</div><div class="day-cell">27</div><div class="day-cell">28</div>
+            </div>
+
+            <div class="countdown-box">
+
+                <div class="countdown-title">⚡ 距離下次段考</div>
+
+                <div class="countdown-time">
+
+                    <span id="cd-days">--</span> 天
+
+                    <span id="cd-hours">--</span> 時
+
+                    <span id="cd-mins">--</span> 分
+
+                </div>
+
             </div>
         </section>
 

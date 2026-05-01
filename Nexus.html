@@ -433,8 +433,8 @@
                         let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
                         let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
 
-                        taskDiv.innerText = text;
-                        taskDiv.style.borderLeft = `4px solid ${color}`;
+                       taskDiv.innerText = text;
+                       taskDiv.style.color = color;
                         
                         // 🚀 新增：點擊任務標籤來刪除！
                         taskDiv.onclick = function(event) {

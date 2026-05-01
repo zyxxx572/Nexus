@@ -74,14 +74,19 @@
             font-weight: bold;
         }
 
-        .day-cell {
+       .day-cell {
             background-color: white;
-            border-radius: 8px; /* 圓角看起來比較現代 */
-            height: 70px; /* 格子的高度，你可以自己調整 */
-            padding: 5px;
-            font-size: 14px;
+            border-radius: 8px;
+            
+            /* 🚀 修改這裡：把高度從 70px 加高到 95px */
+            height: 95px; 
+            
+            /* 🚀 修改這裡：把內邊距跟字體稍微放大，讓數字不會顯得太小 */
+            padding: 8px;
+            font-size: 16px; 
+            
             font-weight: bold;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* 微微的立體感 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
         }
     </style>
 </head>
@@ -92,13 +97,8 @@
             <h2 style="margin-top:0;">Rolling Schedule</h2>
             
             <div class="calendar-grid">
-                <div class="weekday">一</div>
-                <div class="weekday">二</div>
-                <div class="weekday">三</div>
-                <div class="weekday">四</div>
-                <div class="weekday">五</div>
-                <div class="weekday">六</div>
-                <div class="weekday">日</div>
+                <div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div>
+                <div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div><div class="weekday">日</div>
 
                 <div class="day-cell">1</div><div class="day-cell">2</div><div class="day-cell">3</div>
                 <div class="day-cell">4</div><div class="day-cell">5</div><div class="day-cell">6</div><div class="day-cell">7</div>
@@ -108,6 +108,9 @@
                 
                 <div class="day-cell">15</div><div class="day-cell">16</div><div class="day-cell">17</div>
                 <div class="day-cell">18</div><div class="day-cell">19</div><div class="day-cell">20</div><div class="day-cell">21</div>
+
+                <div class="day-cell">22</div><div class="day-cell">23</div><div class="day-cell">24</div>
+                <div class="day-cell">25</div><div class="day-cell">26</div><div class="day-cell">27</div><div class="day-cell">28</div>
             </div>
         </section>
 

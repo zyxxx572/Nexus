@@ -286,7 +286,7 @@
 
     <nav id="bottom-nav">
         <button onclick="showPage('calendar')">行事曆</button>
-        <button onclick="showPage('weekly')">當週事項</button>
+        <button onclick="showPage('weekly')">本週事務</button>
     </nav>
 
     <div id="task-modal" class="modal-overlay">
@@ -373,14 +373,14 @@
                     document.getElementById("cd-days").innerText = "00";
                     document.getElementById("cd-hours").innerText = "00";
                     document.getElementById("cd-mins").innerText = "00";
-                    document.querySelector(".countdown-title").innerText = "🔥 戰鬥開始！段考進行中！";
+                    document.querySelector(".countdown-title").innerText = "🔥段考進行中！";
                     document.querySelector(".countdown-title").style.color = "#ff4d4d";
                 }
             }, 1000);
         }
 
         function setNewExamDate() {
-            const newDate = prompt("請輸入下次段考日期\n(格式必須是 YYYY-MM-DD，例如 2026-06-30)：", "2026-05-20");
+            const newDate = prompt("請輸入下次段考日期\n(格式必須是 YYYY-MM-DD)：", "2026-05-20");
             if (newDate) {
                 if (!isNaN(new Date(newDate).getTime())) {
                     localStorage.setItem("examDate", newDate); 
@@ -441,7 +441,7 @@
                             event.stopPropagation(); // 🛡️ 魔法防護罩：阻止點擊事件穿透到後面的格子
                             
                             // 跳出確認視窗
-                            if (confirm(`確定要刪除任務「${text}」嗎？`)) {
+                            if (confirm(`確定要刪除「${text}」嗎？`)) {
                                 // 從記憶體陣列中拔除這個任務
                                 savedTasks[dateKey].splice(index, 1);
                                 
@@ -492,7 +492,7 @@
         function saveTask() {
             let taskText = document.getElementById('task-input').value.trim();
             if (!taskText) {
-                alert("請輸入內容喔！");
+                alert("請輸入內容！");
                 return;
             }
 
@@ -506,6 +506,7 @@
 
             closeModal();
             generateCalendar(); 
+            generateWeeklyView();
         }
 
         // ==========================================
@@ -582,11 +583,6 @@
                             </div>`;
                     });
                 }
-                
-                // 如果兩邊都沒事，顯示空空如也
-                if (!hasAnyTask) {
-                    cardHTML += `<div class="empty-text">這天沒有任務，好好休息吧！☕</div>`;
-                }
 
                 cardHTML += `</div></div></div>`; // 關閉標籤
                 container.innerHTML += cardHTML; // 丟進畫面
@@ -595,7 +591,7 @@
 
         // 開啟第二頁專用的輸入框
         function openLocalInput(dateKey) {
-            let task = prompt("新增本週作業/備忘 (只會顯示在這裡)：");
+            let task = prompt("新增本週事務：");
             if (task && task.trim() !== "") {
                 if (!localTasks[dateKey]) localTasks[dateKey] = [];
                 localTasks[dateKey].push(task.trim());
@@ -606,7 +602,7 @@
 
         // 點擊刪除第二頁專屬任務
         function deleteLocalTask(dateKey, index) {
-            if (confirm("這項作業完成了嗎？(點擊確定將刪除)")) {
+            if (confirm("確定將其刪除?")) {
                 localTasks[dateKey].splice(index, 1);
                 if (localTasks[dateKey].length === 0) delete localTasks[dateKey];
                 localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));

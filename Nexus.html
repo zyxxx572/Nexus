@@ -296,10 +296,10 @@
             <input type="text" id="task-input" placeholder="輸入活動..." autocomplete="off">
             
             <div class="color-picker">
-                <div class="color-circle selected" style="background-color: #007bb5;" onclick="selectColor('#007bb5', this)"></div>
-                <div class="color-circle" style="background-color: #ff6b6b;" onclick="selectColor('#ff6b6b', this)"></div>
-                <div class="color-circle" style="background-color: #feca57;" onclick="selectColor('#feca57', this)"></div>
-                <div class="color-circle" style="background-color: #1dd1a1;" onclick="selectColor('#1dd1a1', this)"></div>
+                <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectColor('#0A1931', this)"></div>
+                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectColor('#B3CFE5', this)"></div>
+                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectColor('#4A7FA7', this)"></div>
+                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectColor('#1A3D63', this)"></div>
             </div>
 
             <div class="modal-buttons">
@@ -566,8 +566,7 @@
                         let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
                         cardHTML += `
                             <div class="weekly-task-item">
-                                <div class="weekly-task-dot" style="background-color: ${color};"></div>
-                                <span style="font-weight: bold;">${text}</span>
+                                <span style="color: ${color}; font-weight: bold;">${text}</span>
                             </div>`;
                     });
                 }

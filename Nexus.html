@@ -80,9 +80,9 @@
        .day-cell {
             background-color: white;
             border-radius: 8px;
-            height: 90px; 
-            padding: 8px;
-            font-size: 16px; 
+            height: 80px; 
+            padding: 7px;
+            font-size: 14px; 
             font-weight: bold;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             /* 🚀 新增：滑鼠移過去變手指，並隱藏超出的內容 */
@@ -186,6 +186,61 @@
         }
         .btn-cancel { background: #f1f1f1; color: #666; }
         .btn-save { background: #007bb5; color: white; }
+
+        /* --- 第二頁：當週事項卡片樣式 --- */
+        .weekly-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 5px solid #e0e0e0; /* 預設灰邊 */
+            transition: transform 0.2s;
+        }
+
+        /* 💡 今天的卡片給它特別的高光！ */
+        .weekly-card.today {
+            border-left: 5px solid #007bb5;
+            background-color: #f4faff; /* 極淡的冰藍底色 */
+        }
+
+        .weekly-date {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between; /* 讓日期和「今天」標籤分開 */
+        }
+
+        .weekly-task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* 任務之間的間距 */
+        }
+
+        .weekly-task-item {
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #333;
+        }
+
+        /* 任務前面的彩色小圓點 */
+        .weekly-task-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .empty-text {
+            color: #aaa;
+            font-size: 13px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -219,9 +274,10 @@
             </div>
         </section>
 
-        <section id="weekly-page" style="display: none;">
-            <h1>當週事項</h1>
-            <p>這裡是顯示一週計畫的地方</p>
+       <section id="weekly-page" style="display: none;">
+            <h2 style="color: #333; font-size: 18px; margin-bottom: 15px; letter-spacing: 1px;">🎯 本週作戰目標</h2>
+            
+            <div id="weekly-container"></div>
         </section>
     </div>
 
@@ -455,6 +511,61 @@
                 document.getElementById('calendar-page').style.display = 'block';
             } else if (pageName === 'weekly') {
                 document.getElementById('weekly-page').style.display = 'block';
+            }
+        }
+    // ==========================================
+        // 7. 當週事項生成模組 (第二頁專用)
+        // ==========================================
+        function generateWeeklyView() {
+            const container = document.getElementById('weekly-container');
+            if (!container) return; // 安全機制：確定有這個盆子才做事
+            container.innerHTML = ''; 
+
+            const today = new Date();
+            let dayOfWeek = today.getDay();
+            let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+
+            // 抓出本週一的日期
+            let startDate = new Date(today);
+            startDate.setDate(today.getDate() - distanceToMonday);
+
+            const weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+
+            // 連續做 7 天的卡片
+            for (let i = 0; i < 7; i++) {
+                let cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                let dateKey = `${cellDate.getFullYear()}-${cellDate.getMonth() + 1}-${cellDate.getDate()}`;
+                
+                let isToday = cellDate.toDateString() === today.toDateString();
+
+                // 卡片的 HTML 結構
+                let cardHTML = `<div class="weekly-card ${isToday ? 'today' : ''}">
+                    <div class="weekly-date">
+                        <span>${cellDate.getMonth() + 1}/${cellDate.getDate()} (${weekdays[i]})</span>
+                        ${isToday ? '<span style="color:#007bb5; font-size:13px;">📌 今天</span>' : ''}
+                    </div>
+                    <div class="weekly-task-list">`;
+
+                // 檢查這天有沒有任務
+                if (savedTasks[dateKey] && savedTasks[dateKey].length > 0) {
+                    savedTasks[dateKey].forEach(taskObj => {
+                        let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
+                        let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
+                        
+                        // 把任務變成帶有彩色圓點的列表
+                        cardHTML += `
+                            <div class="weekly-task-item">
+                                <div class="weekly-task-dot" style="background-color: ${color};"></div>
+                                <span>${text}</span>
+                            </div>`;
+                    });
+                } else {
+                    cardHTML += `<div class="empty-text">這天沒有任務，好好休息吧！☕</div>`;
+                }
+
+                cardHTML += `</div></div>`; // 關閉標籤
+                container.innerHTML += cardHTML; // 把卡片丟進畫面
             }
         }
     </script>

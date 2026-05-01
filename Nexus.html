@@ -187,60 +187,63 @@
         .btn-cancel { background: #f1f1f1; color: #666; }
         .btn-save { background: #007bb5; color: white; }
 
-        /* --- 第二頁：當週事項卡片樣式 --- */
+       /* --- 第二頁：當週事項卡片樣式 (升級版) --- */
         .weekly-card {
-            background-color: white;
+            background-color: #fafafa; /* 💡 改這裡：極淡的灰白色，讓卡片浮現出來 */
+            border: 1px solid #eaeaea; /* 加一圈淡淡的邊框 */
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            border-left: 5px solid #e0e0e0; /* 預設灰邊 */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            border-left: 5px solid #d0d0d0; /* 預設灰邊 */
             transition: transform 0.2s;
         }
 
-        /* 💡 今天的卡片給它特別的高光！ */
         .weekly-card.today {
             border-left: 5px solid #007bb5;
-            background-color: #f4faff; /* 極淡的冰藍底色 */
+            background-color: #f4faff; /* 今天專屬的冰藍底色 */
         }
 
         .weekly-date {
             font-weight: bold;
             color: #555;
             margin-bottom: 10px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid #eaeaea;
             padding-bottom: 8px;
             display: flex;
-            justify-content: space-between; /* 讓日期和「今天」標籤分開 */
+            justify-content: space-between; 
+            align-items: center; /* 讓按鈕和文字對齊 */
         }
 
-        .weekly-task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px; /* 任務之間的間距 */
+        .weekly-task-list { display: flex; flex-direction: column; gap: 8px; }
+        
+        .weekly-task-item { display: flex; align-items: center; font-size: 15px; color: #333; }
+        
+        .weekly-task-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
+        
+        .empty-text { color: #aaa; font-size: 13px; font-style: italic; margin-top: 5px; }
+
+        /* 🚀 新增：第二頁專屬功能的按鈕與便利貼樣式 */
+        .add-local-btn {
+            background: #eee; border: none; border-radius: 6px;
+            width: 28px; height: 28px; cursor: pointer; color: #666;
+            font-weight: bold; font-size: 16px; transition: 0.2s;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .add-local-btn:hover { background: #007bb5; color: white; }
+
+        .local-task-section {
+            margin-top: 8px; padding-top: 8px;
+            border-top: 1px dashed #ddd; /* 虛線分隔行事曆事項與作業 */
         }
 
-        .weekly-task-item {
-            display: flex;
-            align-items: center;
-            font-size: 15px;
-            color: #333;
+        .local-item {
+            font-size: 14px; color: #555; padding: 6px 10px; margin-bottom: 6px;
+            background: #fffbe6; /* 💡 淡淡的便利貼黃色 */
+            border-left: 3px solid #feca57;
+            border-radius: 4px; cursor: pointer; transition: 0.2s;
         }
-
-        /* 任務前面的彩色小圓點 */
-        .weekly-task-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
-        .empty-text {
-            color: #aaa;
-            font-size: 13px;
-            font-style: italic;
-        }
+        .local-item:hover { text-decoration: line-through; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -317,6 +320,7 @@
         let savedTasks = JSON.parse(localStorage.getItem("nexusTasks")) || {};
         let currentEditingDate = null; 
         let selectedTaskColor = '#007bb5'; 
+        let localTasks = JSON.parse(localStorage.getItem("nexusLocalTasks")) || {};
 
         // ==========================================
         // 2. 系統啟動設定 (網頁載入時執行)
@@ -513,25 +517,22 @@
                 document.getElementById('weekly-page').style.display = 'block';
             }
         }
-    // ==========================================
-        // 7. 當週事項生成模組 (第二頁專用)
+   // ==========================================
+        // 7. 當週事項生成與專屬作業模組
         // ==========================================
         function generateWeeklyView() {
             const container = document.getElementById('weekly-container');
-            if (!container) return; // 安全機制：確定有這個盆子才做事
+            if (!container) return; 
             container.innerHTML = ''; 
 
             const today = new Date();
             let dayOfWeek = today.getDay();
             let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
 
-            // 抓出本週一的日期
             let startDate = new Date(today);
             startDate.setDate(today.getDate() - distanceToMonday);
-
             const weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
-            // 連續做 7 天的卡片
             for (let i = 0; i < 7; i++) {
                 let cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
@@ -539,33 +540,73 @@
                 
                 let isToday = cellDate.toDateString() === today.toDateString();
 
-                // 卡片的 HTML 結構
+                // 卡片外框與頭部 (包含新增按鈕)
                 let cardHTML = `<div class="weekly-card ${isToday ? 'today' : ''}">
                     <div class="weekly-date">
                         <span>${cellDate.getMonth() + 1}/${cellDate.getDate()} (${weekdays[i]})</span>
-                        ${isToday ? '<span style="color:#007bb5; font-size:13px;">📌 今天</span>' : ''}
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${isToday ? '<span style="color:#007bb5; font-size:13px;">📌 今天</span>' : ''}
+                            <button class="add-local-btn" onclick="openLocalInput('${dateKey}')">+</button>
+                        </div>
                     </div>
                     <div class="weekly-task-list">`;
 
-                // 檢查這天有沒有任務
+                let hasAnyTask = false; // 用來檢查這天是不是完全沒事
+
+                // 區塊 A：第一頁同步過來的大型事項
                 if (savedTasks[dateKey] && savedTasks[dateKey].length > 0) {
+                    hasAnyTask = true;
                     savedTasks[dateKey].forEach(taskObj => {
                         let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
                         let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
-                        
-                        // 把任務變成帶有彩色圓點的列表
                         cardHTML += `
                             <div class="weekly-task-item">
                                 <div class="weekly-task-dot" style="background-color: ${color};"></div>
-                                <span>${text}</span>
+                                <span style="font-weight: bold;">${text}</span>
                             </div>`;
                     });
-                } else {
+                }
+
+                // 區塊 B：第二頁專屬的作業/小雜事
+                cardHTML += `<div class="local-task-section">`;
+                if (localTasks[dateKey] && localTasks[dateKey].length > 0) {
+                    hasAnyTask = true;
+                    localTasks[dateKey].forEach((lt, ltIndex) => {
+                        cardHTML += `
+                            <div class="local-item" onclick="deleteLocalTask('${dateKey}', ${ltIndex})">
+                                📝 ${lt}
+                            </div>`;
+                    });
+                }
+                
+                // 如果兩邊都沒事，顯示空空如也
+                if (!hasAnyTask) {
                     cardHTML += `<div class="empty-text">這天沒有任務，好好休息吧！☕</div>`;
                 }
 
-                cardHTML += `</div></div>`; // 關閉標籤
-                container.innerHTML += cardHTML; // 把卡片丟進畫面
+                cardHTML += `</div></div></div>`; // 關閉標籤
+                container.innerHTML += cardHTML; // 丟進畫面
+            }
+        }
+
+        // 開啟第二頁專用的輸入框
+        function openLocalInput(dateKey) {
+            let task = prompt("新增本週作業/備忘 (只會顯示在這裡)：");
+            if (task && task.trim() !== "") {
+                if (!localTasks[dateKey]) localTasks[dateKey] = [];
+                localTasks[dateKey].push(task.trim());
+                localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
+                generateWeeklyView(); // 刷新
+            }
+        }
+
+        // 點擊刪除第二頁專屬任務
+        function deleteLocalTask(dateKey, index) {
+            if (confirm("這項作業完成了嗎？(點擊確定將刪除)")) {
+                localTasks[dateKey].splice(index, 1);
+                if (localTasks[dateKey].length === 0) delete localTasks[dateKey];
+                localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
+                generateWeeklyView(); // 刷新
             }
         }
     </script>

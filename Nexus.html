@@ -89,64 +89,36 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
         }
 
-           /* --- 倒數計時儀表板 --- */
-
+         /* --- 倒數計時儀表板 (白底質感版) --- */
         .countdown-box {
-
-            margin-top: 25px; /* 跟上面的日曆拉開一點距離 */
-
-            background-color: #1e1e1e; /* 深色背景，突顯科技感 */
-
-            color: white;
-
+            margin-top: 25px;
+            background-color: #ffffff; /* 改成純白底 */
+            border: 1px solid #e0e0e0; /* 加一圈極細的淺灰邊框 */
             border-radius: 12px;
-
             padding: 20px;
-
             text-align: center;
-
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* 加點陰影讓它浮起來 */
-
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* 陰影調得非常淡，有輕盈感 */
+            cursor: pointer; /* 💡 魔法設定：滑鼠移過去會變手指，暗示它可以點擊！ */
         }
-
-
 
         .countdown-title {
-
             font-size: 14px;
-
-            color: #88c0d0; /* 冰藍色字體，呼應你的 N 啟動圖騰！ */
-
+            color: #007bb5; /* 適合白底的科技感深藍色 */
             margin-bottom: 10px;
-
-            letter-spacing: 2px; /* 讓字距拉開一點，看起來更高級 */
-
+            letter-spacing: 2px;
             font-weight: bold;
-
         }
-
-
 
         .countdown-time {
-
-            font-size: 18px; /* 「天、時、分」的字體大小 */
-
-            color: #aaaaaa;
-
+            font-size: 18px;
+            color: #666666; /* 單位文字變成優雅的灰色 */
         }
 
-
-
         .countdown-time span {
-
-            font-size: 32px; /* 數字特別放大！ */
-
-            color: #ffffff;  /* 數字用純白，對比更強烈 */
-
+            font-size: 32px;
+            color: #222222;  /* 數字變成深黑色，對比清晰 */
             font-weight: bold;
-
             margin: 0 4px;
-
         }
     </style>
 </head>
@@ -173,7 +145,7 @@
                 <div class="day-cell">25</div><div class="day-cell">26</div><div class="day-cell">27</div><div class="day-cell">28</div>
             </div>
 
-            <div class="countdown-box">
+            <div class="countdown-box"onclick="setNewExamDate()">
 
                 <div class="countdown-title">⚡ 距離下次段考</div>
 
@@ -206,30 +178,77 @@
 
 
 <script>
-    
-        // 當網頁一載入完成時，開始倒數
+        // --- 1. 啟動畫面淡出魔法 ---
         window.onload = function() {
-            
-            // 設定計時器：2000 毫秒 (也就是 2 秒) 後執行動作
             setTimeout(function() {
-                // 動作 1：把布幕的透明度變成 0 (搭配 CSS 做出淡出效果)
                 document.getElementById('splash-screen').style.opacity = '0';
-                
-                // 動作 2：等淡出動畫跑完 (約 0.8 秒) 後，把布幕徹底移走，才不會擋住後面畫面
                 setTimeout(function() {
                     document.getElementById('splash-screen').style.display = 'none';
                 }, 800); 
+            }, 2000);
 
-            }, 2000); // 如果你覺得 2 秒太短，可以改成 3000 (3秒) 或 4000 (4秒)
+            // 💡 網頁一載入，就去問瀏覽器「上次存的日期是什麼？」
+            // 如果沒存過，就預設給 "2026-05-20"
+            const savedDate = localStorage.getItem("examDate") || "2026-05-20";
+            startCountdown(savedDate);
         };
 
-    
+
+        // --- 2. 倒數計時器齒輪 ---
+        let countdownInterval; // 準備一個變數來裝計時器
+
+        function startCountdown(targetDateStr) {
+            clearInterval(countdownInterval); // 每次啟動前，先把舊的計時器捏死，避免時間亂跳
+            
+            const countDownDate = new Date(targetDateStr + "T00:00:00").getTime();
+
+            countdownInterval = setInterval(function() {
+                const now = new Date().getTime();
+                const distance = countDownDate - now;
+
+                if (distance > 0) {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+                    document.getElementById("cd-days").innerText = days.toString().padStart(2, '0');
+                    document.getElementById("cd-hours").innerText = hours.toString().padStart(2, '0');
+                    document.getElementById("cd-mins").innerText = minutes.toString().padStart(2, '0');
+                    
+                    document.querySelector(".countdown-title").innerText = "⚡ 距離下次段考";
+                    document.querySelector(".countdown-title").style.color = "#007bb5";
+                } else {
+                    clearInterval(countdownInterval);
+                    document.getElementById("cd-days").innerText = "00";
+                    document.getElementById("cd-hours").innerText = "00";
+                    document.getElementById("cd-mins").innerText = "00";
+                    document.querySelector(".countdown-title").innerText = "🔥 戰鬥開始！段考進行中！";
+                    document.querySelector(".countdown-title").style.color = "#ff4d4d";
+                }
+            }, 1000);
+        }
+
+        // --- 3. 點擊面板，重新設定日期的功能 ---
+        function setNewExamDate() {
+            // 彈出視窗讓使用者輸入
+            const newDate = prompt("請輸入下次段考日期\n(格式必須是 YYYY-MM-DD，例如 2026-06-30)：", "2026-05-20");
+            
+            if (newDate) {
+                // 簡單檢查一下格式對不對
+                if (!isNaN(new Date(newDate).getTime())) {
+                    localStorage.setItem("examDate", newDate); // 把新日期存進瀏覽器的記憶體裡！
+                    startCountdown(newDate); // 用新日期重新啟動計時器
+                } else {
+                    alert("日期格式怪怪的喔！請照著 YYYY-MM-DD 的格式輸入。");
+                }
+            }
+        }
+
+        // --- 4. 分頁切換功能 (原本的) ---
         function showPage(pageName) {
-            // 第一步：不管三七二十一，先把兩個分頁都先隱藏起來
             document.getElementById('calendar-page').style.display = 'none';
             document.getElementById('weekly-page').style.display = 'none';
 
-            // 第二步：看按鈕傳了什麼名字進來，就把那個分頁打開
             if (pageName === 'calendar') {
                 document.getElementById('calendar-page').style.display = 'block';
             } else if (pageName === 'weekly') {

@@ -6,6 +6,9 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    
     <style>
         #splash-screen {
     /* 1. 基本定位：蓋住全螢幕 */
@@ -356,22 +359,42 @@
                     dateLabel.style.color = '#007bb5';
                 }
 
-                // 讀取這天的任務並顯示
+               // 讀取這天的任務並顯示
                 if (savedTasks[dateKey]) {
-                    savedTasks[dateKey].forEach(taskObj => {
+                    // 注意這裡多了一個 index，用來記住這是陣列裡的第幾個任務
+                    savedTasks[dateKey].forEach((taskObj, index) => {
                         let taskDiv = document.createElement('div');
                         taskDiv.className = 'task-item';
                         
-                        // 相容舊資料與新資料 (文字+顏色)
                         let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
                         let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
 
                         taskDiv.innerText = text;
-                        taskDiv.style.borderLeft = `4px solid ${color}`; // 顯示你選的顏色
+                        taskDiv.style.borderLeft = `4px solid ${color}`;
+                        
+                        // 🚀 新增：點擊任務標籤來刪除！
+                        taskDiv.onclick = function(event) {
+                            event.stopPropagation(); // 🛡️ 魔法防護罩：阻止點擊事件穿透到後面的格子
+                            
+                            // 跳出確認視窗
+                            if (confirm(`確定要刪除任務「${text}」嗎？`)) {
+                                // 從記憶體陣列中拔除這個任務
+                                savedTasks[dateKey].splice(index, 1);
+                                
+                                // 如果這天沒任務了，順手把這天的空名單清掉，保持記憶體乾淨
+                                if (savedTasks[dateKey].length === 0) {
+                                    delete savedTasks[dateKey];
+                                }
+                                
+                                // 存檔並重新畫日曆
+                                localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+                                generateCalendar(); 
+                            }
+                        };
+
                         cell.appendChild(taskDiv);
                     });
                 }
-
                 // 點擊格子，開啟自訂的任務輸入卡片
                 cell.onclick = function() {
                     openModal(dateKey);

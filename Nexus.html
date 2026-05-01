@@ -59,14 +59,56 @@
             border: none;    /* 去掉醜醜的邊框 */
             background: none;/* 去掉預設的灰色背景 */
         }
+        /* --- 行事曆方格陣的魔法 --- */
+        .calendar-grid {
+            display: grid; /* 啟動網格系統 */
+            grid-template-columns: repeat(7, 1fr); /* 關鍵：強制切成 7 等份 */
+            gap: 8px; /* 格子之間的空隙 */
+            margin-top: 15px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            font-weight: bold;
+        }
+
+        .day-cell {
+            background-color: white;
+            border-radius: 8px; /* 圓角看起來比較現代 */
+            height: 70px; /* 格子的高度，你可以自己調整 */
+            padding: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* 微微的立體感 */
+        }
     </style>
 </head>
 <body>
     <div id="splash-screen"></div>  
     <div id="app">
-        <section id="calendar-page">
-            <h1>行事曆</h1>
-            <p>這裡是未來放月曆跟輸入事項的地方</p>
+       <section id="calendar-page">
+            <h2 style="margin-top:0;">Rolling Schedule</h2>
+            
+            <div class="calendar-grid">
+                <div class="weekday">一</div>
+                <div class="weekday">二</div>
+                <div class="weekday">三</div>
+                <div class="weekday">四</div>
+                <div class="weekday">五</div>
+                <div class="weekday">六</div>
+                <div class="weekday">日</div>
+
+                <div class="day-cell">1</div><div class="day-cell">2</div><div class="day-cell">3</div>
+                <div class="day-cell">4</div><div class="day-cell">5</div><div class="day-cell">6</div><div class="day-cell">7</div>
+                
+                <div class="day-cell">8</div><div class="day-cell">9</div><div class="day-cell">10</div>
+                <div class="day-cell">11</div><div class="day-cell">12</div><div class="day-cell">13</div><div class="day-cell">14</div>
+                
+                <div class="day-cell">15</div><div class="day-cell">16</div><div class="day-cell">17</div>
+                <div class="day-cell">18</div><div class="day-cell">19</div><div class="day-cell">20</div><div class="day-cell">21</div>
+            </div>
         </section>
 
         <section id="weekly-page" style="display: none;">

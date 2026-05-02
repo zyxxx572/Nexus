@@ -304,10 +304,10 @@
                 <div style="margin-bottom: 25px;">
                     <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #555;">標記顏色：</label>
                     <div style="display: flex; gap: 15px;">
-                        <div class="color-circle" onclick="selectGlobalColor('#007bb5', this)" style="background:#007bb5; width:30px; height:30px; border-radius:50%; cursor:pointer; border: 2px solid white; box-shadow: 0 0 0 2px #007bb5;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#e63946', this)" style="background:#e63946; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#2a9d8f', this)" style="background:#2a9d8f; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#f4a261', this)" style="background:#f4a261; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#0A1931', this)" style="background:#0A1931; width:30px; height:30px; border-radius:50%; cursor:pointer; border: 2px solid white; box-shadow: 0 0 0 2px #0A1931;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#B3CFE5', this)" style="background:#B3CFE5; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#4A7FA7', this)" style="background:#4A7FA7; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#28527A', this)" style="background:#28527A; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
                     </div>
                 </div>
                 
@@ -323,11 +323,11 @@
     </div>
 
     <section id="exam-page" class="page" style="display:none; padding: 20px;">
-        <h2 style="color: #333; margin-top: 0; margin-bottom: 20px;">🎯 段考戰備區</h2>
+        <h2 style="margin-top:0;">Exam Zone</h2>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
-                <span>🏆 總複習進度</span>
+                <span>總複習進度</span>
                 <span id="total-progress-text">0%</span>
             </div>
             <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 14px;">
@@ -336,7 +336,6 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <input type="text" id="new-subject-input" placeholder="新增科目 (例: 國文)..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
             <button onclick="addSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
         </div>
 
@@ -360,7 +359,6 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="new-task-input" placeholder="新增複習進度 (例: L1)..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
             <button onclick="addTaskToSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
         </div>
 

@@ -276,28 +276,19 @@
             </div>
         </section>
 
-      <section id="input-page" class="page" style="display:none; padding: 20px;">
-            <h2 style="color: #333; margin-top:0; margin-bottom: 20px;">✍️ 新增活動</h2>
+     <section id="input-page" class="page" style="display:none; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin-top:0;">Activities</h2>
             
-            <div class="input-card" style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">選擇日期：</label>
-                <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-sizing: border-box;">
-                
-                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">活動內容：</label>
-                <textarea id="global-task-input" placeholder="請輸入活動..." style="width: 100%; height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-sizing: border-box;"></textarea>
-                
-                <label style="color: #666; display: block; margin-bottom: 8px; font-weight: bold;">標記顏色：</label>
-                <div class="color-picker" style="display: flex; gap: 15px; margin-bottom: 25px;">
-                     <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectGlobalColor('#0A1931', this)"></div>
-                     <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectGlobalColor('#B3CFE5', this)"></div>
-                     <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectGlobalColor('#4A7FA7', this)"></div>
-                     <div class="color-circle" style="background-color: #1A3D63;" onclick="selectGlobalColor('#1A3D63', this)"></div>
-                </div>
+            <button onclick="openCompactModal()" style="width: 45px; height: 45px; border-radius: 50%; background-color: #007bb5; color: white; font-size: 24px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
+                ＋
+            </button>
+        </div>
 
-                <button onclick="saveFromInputPage()" style="width: 100%; padding: 15px; background: #007bb5; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">確認新增活動</button>
-            </div>
-        </section>
-
+        <div style="color: #aaa; text-align: center; margin-top: 60px; font-size: 14px;">
+            目前沒有顯示的活動<br>請點擊右上角的「＋」新增
+        </div>
+    </section>
        <section id="weekly-page" style="display: none;">
             <h2 style="margin-top:0;">Weekly Task</h2>
             

@@ -302,6 +302,27 @@
         <button onclick="showPage('weekly')">本週事務</button>
     </nav>
 
+    <div id="compact-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="padding: 20px; width: 85%; max-width: 300px;">
+            <h3 style="margin-top: 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">➕ 新增活動</h3>
+            
+            <input type="date" id="compact-date" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box;">
+            
+            <input type="text" id="compact-task" placeholder="輸入活動內容..." autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box;">
+            
+            <div class="color-picker" style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectGlobalColor('#0A1931', this)"></div>
+                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectGlobalColor('#B3CFE5', this)"></div>
+                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectGlobalColor('#4A7FA7', this)"></div>
+                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectGlobalColor('#1A3D63', this)"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeCompactModal()" style="flex: 1; padding: 10px; background: #f1f1f1; color: #666; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">取消</button>
+                <button onclick="saveCompactTask()" style="flex: 1; padding: 10px; background: #007bb5; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">確認</button>
+            </div>
+        </div>
+    </div>
 <script>
         // ==========================================
         // 1. 全域變數 (系統記憶體)
@@ -573,7 +594,7 @@ function saveFromInputPage() {
                     localTasks[dateKey].forEach((lt, ltIndex) => {
                         cardHTML += `
                             <div class="local-item" onclick="deleteLocalTask('${dateKey}', ${ltIndex})">
-                                📝 ${lt}
+                                ${lt}
                             </div>`;
                     });
                 }
@@ -602,6 +623,64 @@ function saveFromInputPage() {
                 localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
                 generateWeeklyView(); // 刷新
             }
+        }
+
+    // ==========================================
+        // 8. 輕量版彈窗控制模組
+        // ==========================================
+        let globalSelectedColor = '#0A1931'; // 預設顏色
+
+        // 選擇顏色
+        function selectGlobalColor(color, element) {
+            globalSelectedColor = color;
+            document.querySelectorAll('#compact-modal .color-circle').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // 打開彈窗 (加號按下去會執行這個)
+        function openCompactModal() {
+            document.getElementById('compact-modal').style.display = 'flex';
+            
+            // 貼心小功能：一打開自動幫你填好「今天」的日期
+            let today = new Date();
+            let yyyy = today.getFullYear();
+            let mm = String(today.getMonth() + 1).padStart(2, '0');
+            let dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('compact-date').value = `${yyyy}-${mm}-${dd}`;
+            
+            document.getElementById('compact-task').value = ''; // 清空上次打的字
+        }
+
+        // 關閉彈窗 (取消按下去會執行這個)
+        function closeCompactModal() {
+            document.getElementById('compact-modal').style.display = 'none';
+        }
+
+        // 儲存任務 (確認按下去會執行這個)
+        function saveCompactTask() {
+            let dateVal = document.getElementById('compact-date').value; 
+            let taskText = document.getElementById('compact-task').value.trim();
+
+            if (!dateVal || !taskText) {
+                alert("日期和內容都要填喔！");
+                return;
+            }
+
+            // 將日期轉成系統認得的格式 (例如 5-8)
+            let dateParts = dateVal.split('-');
+            let dateKey = `${parseInt(dateParts[0])}-${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
+
+            // 存入資料庫
+            if (!savedTasks[dateKey]) {
+                savedTasks[dateKey] = [];
+            }
+            savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
+            localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+
+            // 關閉視窗並重新整理畫面
+            closeCompactModal();
+            generateCalendar();
+            generateWeeklyView();
         }
     </script>
 </body>

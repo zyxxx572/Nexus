@@ -361,6 +361,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="new-task-input" placeholder="" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9;">
             <button onclick="addTaskToSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
         </div>
 
@@ -881,22 +882,23 @@ function saveFromInputPage() {
             generateWeeklyView();
         }
 
-    // ==========================================
-        // 9. 段考進度追蹤模組
+  // ==========================================
+        // 9. 段考專區模組 (雙層頁面版)
         // ==========================================
         let examSubjects = JSON.parse(localStorage.getItem('nexusExamSubjects')) || [];
         let currentSubjectIndex = -1; // 記錄目前點開哪個科目
 
-        window.addEventListener('load', () => {
-            renderExamMain(); // 網頁載入時繪製主畫面
-        });
+        function saveExamData() {
+            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
+        }
 
-        // --- 主畫面功能 ---
+        // --- 1. 主畫面功能 ---
         function addSubject() {
             let input = document.getElementById('new-subject-input');
             let text = input.value.trim();
             if (text) {
-                examSubjects.push({ name: text, tasks: [] });
+                // 新增科目時，自帶一個空的任務清單
+                examSubjects.push({ name: text, tasks: [], note: '' });
                 input.value = '';
                 saveExamData();
                 renderExamMain();
@@ -905,59 +907,53 @@ function saveFromInputPage() {
 
         function renderExamMain() {
             let container = document.getElementById('subject-list-container');
+            if (!container) return;
             container.innerHTML = '';
             
-            let totalTasks = 0;
-            let totalDone = 0;
-
             examSubjects.forEach((subject, index) => {
-                let subjTotal = subject.tasks.length;
-                let subjDone = subject.tasks.filter(t => t.done).length;
+                let subjTotal = subject.tasks ? subject.tasks.length : 0;
+                let subjDone = subject.tasks ? subject.tasks.filter(t => t.done).length : 0;
                 let subjPercent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
                 
-                totalTasks += subjTotal;
-                totalDone += subjDone;
-
                 let card = document.createElement('div');
-                // 卡片樣式設計
-                card.style.cssText = "background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; border-left: 5px solid #0A1931;";
-                // 點擊卡片進入詳細頁面
-                card.onclick = () => openSubjectDetail(index); 
+                card.style.cssText = "background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #0A1931;";
                 
                 card.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
-                        <span> ${subject.name}</span>
-                        <span>${subjPercent}%</span>
+                    <div style="cursor: pointer;" onclick="openSubjectDetail(${index})">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
+                            <span style="font-size: 16px;">${subject.name} <span style="font-size: 12px; color: #888; font-weight: normal;">(點擊查看任務)</span></span>
+                            <span style="color: #4A7FA7; font-size: 16px;">${subjPercent}%</span>
+                        </div>
+                        <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 8px; margin-bottom: 15px;">
+                            <div style="width: ${subjPercent}%; background: #4A7FA7; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
+                        </div>
                     </div>
-                    <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 8px;">
-                        <div style="width: ${subjPercent}%; background: #B3CFE5; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
-                    </div>
-                    <input type="text" placeholder="" value="${subject.note || ''}" onchange="updateSubjectNote(${index}, this.value)" style="width: 100%; padding: 8px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; background: #fafafa; box-sizing: border-box; font-size: 14px; color: #555;">
                     
-                    
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="deleteSubject(${index})" style="padding: 8px 15px; background: #f8d7da; border: none; color: #721c24; font-weight: bold; border-radius: 5px; cursor: pointer;">刪除</button>
+                    <input type="text" placeholder="輸入備註或重點..." value="${subject.note || ''}" onchange="updateSubjectNote(${index}, this.value)" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; background: #fafafa; box-sizing: border-box; font-size: 14px; color: #555;">
+                    <div style="text-align: right;">
+                        <button onclick="deleteSubject(${index})" style="padding: 6px 12px; background: #f8d7da; border: none; color: #721c24; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 12px;">刪除科目</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
+        }
 
-            // 🌟 新增：專門負責把「科目內輸入框」的文字存起來的小幫手
         function updateSubjectNote(index, text) {
             examSubjects[index].note = text;
-            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
+            saveExamData();
         }
 
-            // 更新總進度條
-            let totalPercent = totalTasks === 0 ? 0 : Math.round((totalDone / totalTasks) * 100);
-            document.getElementById('total-progress-text').innerText = `${totalPercent}%`;
-            document.getElementById('total-progress-bar').style.width = `${totalPercent}%`;
+        function deleteSubject(index) {
+            if (confirm("確定要刪除整個科目進度嗎？")) {
+                examSubjects.splice(index, 1);
+                saveExamData();
+                renderExamMain();
+            }
         }
 
-        // --- 詳細畫面功能 ---
+        // --- 2. 詳細畫面切換 ---
         function openSubjectDetail(index) {
             currentSubjectIndex = index;
-            // 隱藏主畫面，顯示詳細頁
             document.getElementById('exam-page').style.display = 'none';
             document.getElementById('subject-detail-page').style.display = 'block';
             renderSubjectDetail();
@@ -965,16 +961,17 @@ function saveFromInputPage() {
 
         function closeSubjectDetail() {
             currentSubjectIndex = -1;
-            // 隱藏詳細頁，回到主畫面
             document.getElementById('subject-detail-page').style.display = 'none';
             document.getElementById('exam-page').style.display = 'block';
-            renderExamMain(); // 重新計算主頁進度
+            renderExamMain(); // 回到主畫面時重新計算進度
         }
 
+        // --- 3. 詳細畫面內的小任務邏輯 ---
         function addTaskToSubject() {
             let input = document.getElementById('new-task-input');
             let text = input.value.trim();
             if (text && currentSubjectIndex !== -1) {
+                if (!examSubjects[currentSubjectIndex].tasks) examSubjects[currentSubjectIndex].tasks = [];
                 examSubjects[currentSubjectIndex].tasks.push({ text: text, done: false });
                 input.value = '';
                 saveExamData();
@@ -1003,30 +1000,28 @@ function saveFromInputPage() {
             let listEl = document.getElementById('subject-task-list');
             listEl.innerHTML = '';
             
-            let subjTotal = subject.tasks.length;
+            let subjTotal = subject.tasks ? subject.tasks.length : 0;
             let subjDone = 0;
 
-            subject.tasks.forEach((task, index) => {
-                if (task.done) subjDone++;
-                let div = document.createElement('div');
-                div.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);";
-                div.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;" onclick="toggleSubjectTask(${index})">
-                        <input type="checkbox" ${task.done ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #007bb5; pointer-events: none;">
-                        <span style="font-size: 16px; text-decoration: ${task.done ? 'line-through' : 'none'}; color: ${task.done ? '#aaa' : '#333'};">${task.text}</span>
-                    </div>
-                    <button onclick="deleteSubjectTask(${index})" style="background: transparent; border: none; color: #dc3545; font-size: 14px; cursor: pointer; padding: 5px;">刪除</button>
-                `;
-                listEl.appendChild(div);
-            });
+            if (subject.tasks) {
+                subject.tasks.forEach((task, index) => {
+                    if (task.done) subjDone++;
+                    let div = document.createElement('div');
+                    div.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; border: 1px solid #eee;";
+                    div.innerHTML = `
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
+                            <input type="checkbox" onchange="toggleSubjectTask(${index})" ${task.done ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-size: 15px; text-decoration: ${task.done ? 'line-through' : 'none'}; color: ${task.done ? '#aaa' : '#333'};">${task.text}</span>
+                        </label>
+                        <button onclick="deleteSubjectTask(${index})" style="background: transparent; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 5px;">✖</button>
+                    `;
+                    listEl.appendChild(div);
+                });
+            }
 
             let percent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
             document.getElementById('detail-progress-text').innerText = `${percent}%`;
             document.getElementById('detail-progress-bar').style.width = `${percent}%`;
-        }
-
-        function saveExamData() {
-            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
         }
     </script>
 </body>

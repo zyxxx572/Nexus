@@ -475,7 +475,7 @@
         }
 
         // ==========================================
-        // 4. 四週滾動日曆生成模組
+        // 4. 四週滾動日曆生成模組 (已移除點擊刪除功能)
         // ==========================================
         function generateCalendar() {
             const calendarBody = document.getElementById('calendar-body');
@@ -506,49 +506,25 @@
                     dateLabel.style.color = '#007bb5';
                 }
 
-               // 讀取這天的任務並顯示
+               // 讀取這天的任務並顯示 (純展示，不可點擊)
                 if (savedTasks[dateKey]) {
-                    // 注意這裡多了一個 index，用來記住這是陣列裡的第幾個任務
-                    savedTasks[dateKey].forEach((taskObj, index) => {
+                    savedTasks[dateKey].forEach((taskObj) => {
                         let taskDiv = document.createElement('div');
                         taskDiv.className = 'task-item';
                         
                         let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
                         let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
 
-                       taskDiv.innerText = text;
-                       taskDiv.style.color = color;
+                        taskDiv.innerText = text;
+                        taskDiv.style.color = color;
                         
-                        // 🚀 新增：點擊任務標籤來刪除！
-                        taskDiv.onclick = function(event) {
-                            event.stopPropagation(); // 🛡️ 魔法防護罩：阻止點擊事件穿透到後面的格子
-                            
-                            // 跳出確認視窗
-                            if (confirm(`確定要刪除「${text}」嗎？`)) {
-                                // 從記憶體陣列中拔除這個任務
-                                savedTasks[dateKey].splice(index, 1);
-                                
-                                // 如果這天沒任務了，順手把這天的空名單清掉，保持記憶體乾淨
-                                if (savedTasks[dateKey].length === 0) {
-                                    delete savedTasks[dateKey];
-                                }
-                                
-                                // 存檔並重新畫日曆
-                                localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-                                generateCalendar(); 
-                                generateWeeklyView();
-                            }
-                        };
-
                         cell.appendChild(taskDiv);
                     });
                 }
-               
 
                 calendarBody.appendChild(cell);
             }
         }
-
       //5.
 
   // ==========================================
@@ -657,6 +633,45 @@ function deleteTaskFromList(dateKey, index) {
     }
 }
         // --- ✨ 控制彈出視窗開關 ---
+function toggleEventModal() {
+    const modal = document.getElementById('event-input-modal');
+    if (modal.style.display === 'none' || modal.style.display === '') {
+        modal.style.display = 'flex'; // 顯示並置中
+    } else {
+        modal.style.display = 'none'; // 隱藏
+    }
+}
+
+// --- 更新原本的儲存功能 ---
+// (找到你剛剛貼上的 saveFromInputPage()，把最後面補上關閉視窗的代碼)
+function saveFromInputPage() {
+    let dateVal = document.getElementById('global-date-input').value; 
+    let taskText = document.getElementById('global-task-input').value.trim();
+
+    if (!dateVal || !taskText) {
+        alert("日期和內容都要填喔！");
+        return;
+    }
+
+    let dateParts = dateVal.split('-');
+    let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
+
+    if (!savedTasks[dateKey]) {
+        savedTasks[dateKey] = [];
+    }
+    savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
+    localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+
+    document.getElementById('global-task-input').value = "";
+    
+    generateCalendar();
+    generateWeeklyView();
+    renderAllEventsList(); 
+    
+    // ✨ 新增成功後，自動把彈出視窗關掉！
+    toggleEventModal();
+}
+    // --- ✨ 控制彈出視窗開關 ---
 function toggleEventModal() {
     const modal = document.getElementById('event-input-modal');
     if (modal.style.display === 'none' || modal.style.display === '') {

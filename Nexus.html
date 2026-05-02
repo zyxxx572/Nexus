@@ -298,7 +298,7 @@
                 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">活動內容：</label>
-                    <textarea id="global-task-input" placeholder="請輸入活動..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; height: 80px; box-sizing: border-box; resize: none;"></textarea>
+                    <textarea id="global-task-input" placeholder="" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; height: 80px; box-sizing: border-box; resize: none;"></textarea>
                 </div>
                 
                 <div style="margin-bottom: 25px;">
@@ -326,7 +326,9 @@
         <h2 style="margin-top:0;">Exam Zone</h2>
         
         <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #555;">新增複習科目：</label>
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
+            <input type="text" id="new-subject-input" placeholder="" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9;">
                 <span>總複習進度</span>
                 <span id="total-progress-text">0%</span>
             </div>
@@ -930,9 +932,21 @@ function saveFromInputPage() {
                     <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 8px;">
                         <div style="width: ${subjPercent}%; background: #B3CFE5; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
                     </div>
+                    <input type="text" placeholder="" value="${subject.note || ''}" onchange="updateSubjectNote(${index}, this.value)" style="width: 100%; padding: 8px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ddd; background: #fafafa; box-sizing: border-box; font-size: 14px; color: #555;">
+                    
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="deleteSubject(${index})" style="padding: 8px 15px; background: #f8d7da; border: none; color: #721c24; font-weight: bold; border-radius: 5px; cursor: pointer;">刪除</button>
+                    </div>
                 `;
                 container.appendChild(card);
             });
+
+            // 🌟 新增：專門負責把「科目內輸入框」的文字存起來的小幫手
+        function updateSubjectNote(index, text) {
+            examSubjects[index].note = text;
+            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
+        }
 
             // 更新總進度條
             let totalPercent = totalTasks === 0 ? 0 : Math.round((totalDone / totalTasks) * 100);

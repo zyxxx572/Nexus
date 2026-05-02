@@ -277,17 +277,34 @@
         </section>
 
      <section id="input-page" class="page" style="display:none; padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin-top:0;">Activities</h2>
-            
-            <button onclick="openCompactModal()" style="width: 45px; height: 45px; border-radius: 50%; background-color: #007bb5; color: white; font-size: 24px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s;">
-                ＋
-            </button>
+        <h2 style="color: #333; margin-top: 0;">✍️ 新增活動</h2>
+        
+        <div style="background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px;">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">選擇日期：</label>
+                <input type="date" id="event-date" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; background: #eee;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">活動內容：</label>
+                <textarea id="event-text" placeholder="請輸入活動..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; height: 80px;"></textarea>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">標記顏色：</label>
+                <div style="display: flex; gap: 10px;">
+                    <div class="color-opt active" data-color="#0A1931" style="background:#0A1931; width:35px; height:35px; border-radius:50%; cursor:pointer; border:2px solid #fff; outline:2px solid #0A1931;"></div>
+                    <div class="color-opt" data-color="#B3CFE5" style="background:#B3CFE5; width:35px; height:35px; border-radius:50%; cursor:pointer;"></div>
+                    <div class="color-opt" data-color="#4A7FA7" style="background:#4A7FA7; width:35px; height:35px; border-radius:50%; cursor:pointer;"></div>
+                    <div class="color-opt" data-color="#28527A" style="background:#28527A; width:35px; height:35px; border-radius:50%; cursor:pointer;"></div>
+                </div>
+            </div>
+            <button onclick="saveEventFromInput()" style="width: 100%; padding: 12px; background: #007bb5; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">確認新增活動</button>
         </div>
 
-        <div style="color: #aaa; text-align: center; margin-top: 60px; font-size: 14px;">
-            目前沒有顯示的活動<br>請點擊右上角的「＋」新增
-        </div>
+        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 20px;">
+
+        <h3 style="color: #333;">📋 所有活動 (依日期排序)</h3>
+        <div id="all-events-list">
+            </div>
     </section>
        <section id="weekly-page" style="display: none;">
             <h2 style="margin-top:0;">Weekly Task</h2>
@@ -525,16 +542,19 @@
 
       //5.
 
-    let globalSelectedColor = '#007bb5'; // 預設顏色
+  // ==========================================
+// 活動列表頁面 (新增與總清單)
+// ==========================================
+let globalSelectedColor = '#007bb5'; // 預設顏色
 
-// 1. 讓第三頁能選顏色
+// 1. 讓活動列表能選顏色
 function selectGlobalColor(color, element) {
     globalSelectedColor = color;
     document.querySelectorAll('#input-page .color-circle').forEach(el => el.style.border = "none");
     element.style.border = "2px solid white";
 }
 
-// 2. 第三頁的儲存功能
+// 2. 儲存功能 (優化：不跳轉，並刷新清單)
 function saveFromInputPage() {
     let dateVal = document.getElementById('global-date-input').value; // 格式是 YYYY-MM-DD
     let taskText = document.getElementById('global-task-input').value.trim();
@@ -548,7 +568,7 @@ function saveFromInputPage() {
     let dateParts = dateVal.split('-');
     let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
 
-    // 存入資料庫
+    // 存入資料庫 (savedTasks)
     if (!savedTasks[dateKey]) {
         savedTasks[dateKey] = [];
     }
@@ -557,14 +577,75 @@ function saveFromInputPage() {
 
     // 清空輸入框
     document.getElementById('global-task-input').value = "";
-    alert("任務已同步到戰術面板！");
-
-    // 重新整理所有頁面
+    
+    // ✨ 更新所有畫面，並留在這一頁看結果
     generateCalendar();
     generateWeeklyView();
-    
-    // 自動跳轉回第一頁看結果
-    showPage('calendar');
+    renderAllEventsList(); // 呼叫下方的新函數來刷新清單
+}
+
+// 3. ✨ 新增：繪製下方所有活動清單 (依日期排序)
+function renderAllEventsList() {
+    const listEl = document.getElementById('all-events-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    // 取出所有日期並進行「月、日」排序 (確保 10-1 不會排在 2-1 前面)
+    let sortedKeys = Object.keys(savedTasks).sort((a, b) => {
+        let [m1, d1] = a.split('-').map(Number);
+        let [m2, d2] = b.split('-').map(Number);
+        if (m1 !== m2) return m1 - m2;
+        return d1 - d2;
+    });
+
+    if (sortedKeys.length === 0) {
+        listEl.innerHTML = '<p style="color: #aaa; text-align: center; margin-top: 20px;">目前沒有任何活動喔！</p>';
+        return;
+    }
+
+    // 依照排好的日期把卡片生出來
+    sortedKeys.forEach(dateKey => {
+        savedTasks[dateKey].forEach((task, index) => {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: white; 
+                padding: 15px; 
+                border-radius: 10px; 
+                margin-bottom: 10px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+                border-left: 6px solid ${task.color};
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            `;
+
+            card.innerHTML = `
+                <div>
+                    <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${dateKey}</div>
+                    <div style="font-size: 16px; color: #333; font-weight: 500;">${task.text}</div>
+                </div>
+                <button onclick="deleteTaskFromList('${dateKey}', ${index})" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; font-weight: bold;">刪除</button>
+            `;
+            listEl.appendChild(card);
+        });
+    });
+}
+
+// 4. ✨ 新增：從清單刪除活動
+function deleteTaskFromList(dateKey, index) {
+    if (confirm("確定要刪除這項活動嗎？")) {
+        savedTasks[dateKey].splice(index, 1);
+        // 如果這天刪到沒活動了，就把這天從資料庫清掉
+        if (savedTasks[dateKey].length === 0) {
+            delete savedTasks[dateKey]; 
+        }
+        localStorage.setItem('nexusTasks', JSON.stringify(savedTasks));
+        
+        // 刪除後重新整理所有畫面
+        renderAllEventsList();
+        generateCalendar();
+        generateWeeklyView();
+    }
 }
       // ==========================================
         // 6. 頁面切換模組
@@ -582,6 +663,7 @@ function saveFromInputPage() {
                 document.getElementById('calendar-page').style.display = 'block';
             } else if (pageName === 'input') {
                 document.getElementById('input-page').style.display = 'block';
+                renderAllEventsList();
             } else if (pageName === 'weekly') {
                 document.getElementById('weekly-page').style.display = 'block';
             } else if (pageName === 'exam') {

@@ -296,6 +296,51 @@
         </section>
     </div>
 
+    <section id="exam-page" class="page" style="display:none; padding: 20px;">
+        <h2 style="color: #333; margin-top: 0; margin-bottom: 20px;">🎯 段考戰備區</h2>
+        
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
+                <span>🏆 總複習進度</span>
+                <span id="total-progress-text">0%</span>
+            </div>
+            <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 14px;">
+                <div id="total-progress-bar" style="width: 0%; background: #007bb5; height: 14px; border-radius: 10px; transition: 0.4s;"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input type="text" id="new-subject-input" placeholder="新增科目 (例: 國文)..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            <button onclick="addSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
+        </div>
+
+        <div id="subject-list-container"></div>
+    </section>
+
+    <section id="subject-detail-page" class="page" style="display:none; padding: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
+            <button onclick="closeSubjectDetail()" style="background: #f1f1f1; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; color: #333; cursor: pointer;">🔙 返回</button>
+            <h2 id="detail-subject-title" style="color: #333; margin: 0;">科目名稱</h2>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #555;">
+                <span>本科進度</span>
+                <span id="detail-progress-text">0%</span>
+            </div>
+            <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 10px;">
+                <div id="detail-progress-bar" style="width: 0%; background: #4A7FA7; height: 10px; border-radius: 10px; transition: 0.4s;"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="new-task-input" placeholder="新增複習進度 (例: L1)..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+            <button onclick="addTaskToSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
+        </div>
+
+        <div id="subject-task-list"></div>
+    </section>
+
     <nav id="bottom-nav">
         <button onclick="showPage('calendar')">行事曆</button>
         <button onclick="showPage('input')">活動列表</button>
@@ -524,18 +569,25 @@ function saveFromInputPage() {
         // 6. 頁面切換模組
         // ==========================================
         function showPage(pageName) {
-            // 先把三個頁面都隱藏
+            // 1. 先把所有頁面都隱藏 (包含新的詳細頁)
             document.getElementById('calendar-page').style.display = 'none';
-            document.getElementById('weekly-page').style.display = 'none';
             document.getElementById('input-page').style.display = 'none';
+            document.getElementById('weekly-page').style.display = 'none';
+            document.getElementById('exam-page').style.display = 'none';
+            document.getElementById('subject-detail-page').style.display = 'none'; 
 
-            // 根據按下的按鈕，顯示對應的頁面
+            // 2. 顯示對應的頁面
             if (pageName === 'calendar') {
                 document.getElementById('calendar-page').style.display = 'block';
-            } else if (pageName === 'weekly') {
-                document.getElementById('weekly-page').style.display = 'block';
             } else if (pageName === 'input') {
                 document.getElementById('input-page').style.display = 'block';
+            } else if (pageName === 'weekly') {
+                document.getElementById('weekly-page').style.display = 'block';
+            } else if (pageName === 'exam') {
+                // 點擊段考專區時，重置回主畫面
+                currentSubjectIndex = -1;
+                document.getElementById('exam-page').style.display = 'block';
+                renderExamMain();
             }
         }
    // ==========================================
@@ -680,6 +732,142 @@ function saveFromInputPage() {
             closeCompactModal();
             generateCalendar();
             generateWeeklyView();
+        }
+
+    // ==========================================
+        // 9. 段考進度追蹤模組
+        // ==========================================
+        let examSubjects = JSON.parse(localStorage.getItem('nexusExamSubjects')) || [];
+        let currentSubjectIndex = -1; // 記錄目前點開哪個科目
+
+        window.addEventListener('load', () => {
+            renderExamMain(); // 網頁載入時繪製主畫面
+        });
+
+        // --- 主畫面功能 ---
+        function addSubject() {
+            let input = document.getElementById('new-subject-input');
+            let text = input.value.trim();
+            if (text) {
+                examSubjects.push({ name: text, tasks: [] });
+                input.value = '';
+                saveExamData();
+                renderExamMain();
+            }
+        }
+
+        function renderExamMain() {
+            let container = document.getElementById('subject-list-container');
+            container.innerHTML = '';
+            
+            let totalTasks = 0;
+            let totalDone = 0;
+
+            examSubjects.forEach((subject, index) => {
+                let subjTotal = subject.tasks.length;
+                let subjDone = subject.tasks.filter(t => t.done).length;
+                let subjPercent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
+                
+                totalTasks += subjTotal;
+                totalDone += subjDone;
+
+                let card = document.createElement('div');
+                // 卡片樣式設計
+                card.style.cssText = "background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; border-left: 5px solid #0A1931;";
+                // 點擊卡片進入詳細頁面
+                card.onclick = () => openSubjectDetail(index); 
+                
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
+                        <span>📚 ${subject.name}</span>
+                        <span>${subjPercent}%</span>
+                    </div>
+                    <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 8px;">
+                        <div style="width: ${subjPercent}%; background: #B3CFE5; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // 更新總進度條
+            let totalPercent = totalTasks === 0 ? 0 : Math.round((totalDone / totalTasks) * 100);
+            document.getElementById('total-progress-text').innerText = `${totalPercent}%`;
+            document.getElementById('total-progress-bar').style.width = `${totalPercent}%`;
+        }
+
+        // --- 詳細畫面功能 ---
+        function openSubjectDetail(index) {
+            currentSubjectIndex = index;
+            // 隱藏主畫面，顯示詳細頁
+            document.getElementById('exam-page').style.display = 'none';
+            document.getElementById('subject-detail-page').style.display = 'block';
+            renderSubjectDetail();
+        }
+
+        function closeSubjectDetail() {
+            currentSubjectIndex = -1;
+            // 隱藏詳細頁，回到主畫面
+            document.getElementById('subject-detail-page').style.display = 'none';
+            document.getElementById('exam-page').style.display = 'block';
+            renderExamMain(); // 重新計算主頁進度
+        }
+
+        function addTaskToSubject() {
+            let input = document.getElementById('new-task-input');
+            let text = input.value.trim();
+            if (text && currentSubjectIndex !== -1) {
+                examSubjects[currentSubjectIndex].tasks.push({ text: text, done: false });
+                input.value = '';
+                saveExamData();
+                renderSubjectDetail();
+            }
+        }
+
+        function toggleSubjectTask(taskIndex) {
+            let task = examSubjects[currentSubjectIndex].tasks[taskIndex];
+            task.done = !task.done;
+            saveExamData();
+            renderSubjectDetail();
+        }
+
+        function deleteSubjectTask(taskIndex) {
+            examSubjects[currentSubjectIndex].tasks.splice(taskIndex, 1);
+            saveExamData();
+            renderSubjectDetail();
+        }
+
+        function renderSubjectDetail() {
+            if (currentSubjectIndex === -1) return;
+            let subject = examSubjects[currentSubjectIndex];
+            document.getElementById('detail-subject-title').innerText = subject.name;
+
+            let listEl = document.getElementById('subject-task-list');
+            listEl.innerHTML = '';
+            
+            let subjTotal = subject.tasks.length;
+            let subjDone = 0;
+
+            subject.tasks.forEach((task, index) => {
+                if (task.done) subjDone++;
+                let div = document.createElement('div');
+                div.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);";
+                div.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;" onclick="toggleSubjectTask(${index})">
+                        <input type="checkbox" ${task.done ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #007bb5; pointer-events: none;">
+                        <span style="font-size: 16px; text-decoration: ${task.done ? 'line-through' : 'none'}; color: ${task.done ? '#aaa' : '#333'};">${task.text}</span>
+                    </div>
+                    <button onclick="deleteSubjectTask(${index})" style="background: transparent; border: none; color: #dc3545; font-size: 14px; cursor: pointer; padding: 5px;">刪除</button>
+                `;
+                listEl.appendChild(div);
+            });
+
+            let percent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
+            document.getElementById('detail-progress-text').innerText = `${percent}%`;
+            document.getElementById('detail-progress-bar').style.width = `${percent}%`;
+        }
+
+        function saveExamData() {
+            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
         }
     </script>
 </body>

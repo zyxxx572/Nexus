@@ -188,61 +188,94 @@
 
        /* --- 第二頁：當週事項卡片樣式 (升級版) --- */
         .weekly-card {
-            background-color: #fafafa; /* 💡 改這裡：極淡的灰白色，讓卡片浮現出來 */
-            border: 1px solid #eaeaea; /* 加一圈淡淡的邊框 */
+            background-color: #fafafa; /* 🎨 平常日子的卡片底色 (極淡的灰白) */
+            border: 1px solid #eaeaea; /* 🎨 卡片外圍淡淡的邊框顏色 */
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            border-left: 5px solid #AAC0E1; 
+            border-left: 5px solid #AAC0E1; /* 🎨 平常日子卡片「左邊那條粗邊框」的顏色 (淺粉藍色) */
             transition: transform 0.2s;
         }
 
         .weekly-card.today {
-            border-left: 5px solid #007bb5;
-            background-color: #0E2F76; 
+            border-left: 5px solid #007bb5; /* 🎨 「今天」卡片左邊粗邊框的顏色 (亮藍色) */
+            background-color: #0E2F76; /* 🎨 「今天」卡片的顯眼底色 (深海軍藍) */
+        }
+
+        /* 🌟 加碼優化：讓「今天」深色背景上的文字變成白色，不然黑字配深藍底會看不見！ */
+        .weekly-card.today .weekly-date, 
+        .weekly-card.today .local-item {
+            color: #ffffff; /* 🎨 「今天」卡片裡的文字顏色 (純白) */
+            border-bottom-color: rgba(255,255,255,0.2); /* 🎨 「今天」日期的下方分隔線 (半透明白) */
         }
 
         .weekly-date {
             font-weight: bold;
-            color: #555;
+            color: #555; /* 🎨 平常日子「日期文字」(例: 4/29 星期三) 的顏色 */
             margin-bottom: 10px;
-            border-bottom: 1px solid #eaeaea;
+            border-bottom: 1px solid #eaeaea; /* 🎨 日期下方分隔線的顏色 */
             padding-bottom: 8px;
             display: flex;
             justify-content: space-between; 
-            align-items: center; /* 讓按鈕和文字對齊 */
+            align-items: center; 
         }
 
         .weekly-task-list { display: flex; flex-direction: column; gap: 8px; }
         
-        .weekly-task-item { display: flex; align-items: center; font-size: 15px; color: #333; }
+        .weekly-task-item { display: flex; align-items: center; font-size: 15px; color: #333; /* 🎨 從行事曆同步過來的任務文字顏色 */ }
         
         .weekly-task-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
         
-        .empty-text { color: #aaa; font-size: 13px; font-style: italic; margin-top: 5px; }
+        .empty-text { color: #aaa; /* 🎨 「目前無事項」的灰色提示字顏色 */ font-size: 13px; font-style: italic; margin-top: 5px; }
 
         /* 🚀 新增：第二頁專屬功能的按鈕與便利貼樣式 */
         .add-local-btn {
-            background: #eee; border: none; border-radius: 6px;
-            width: 28px; height: 28px; cursor: pointer; color: #666;
+            background: #eee; /* 🎨 右上角「+」號按鈕平常的底色 */
+            border: none; border-radius: 6px;
+            width: 28px; height: 28px; cursor: pointer; 
+            color: #666; /* 🎨 「+」號本身的顏色 */
             font-weight: bold; font-size: 16px; transition: 0.2s;
             display: flex; justify-content: center; align-items: center;
         }
-        .add-local-btn:hover { background: #F5FEFF; color: white; }
+        .add-local-btn:hover { 
+            background: #0A1931; /* 🎨 滑鼠移過去「+」號時變成的底色 (深藍) */ 
+            color: white; /* 🎨 滑鼠移過去「+」號時變成的文字顏色 (白) */ 
+        }
 
         .local-task-section {
             margin-top: 8px; padding-top: 8px;
-            border-top: 1px dashed #ddd; /* 虛線分隔行事曆事項與作業 */
+            border-top: 1px dashed #ddd; /* 🎨 分隔行事曆與自己新增事項的「虛線顏色」 */ 
         }
 
+        /* 🔪 幫你把醜醜的藍色背景跟黃色邊框砍掉了，改成乾淨的文字排版！ */
         .local-item {
-            font-size: 14px; color: #555; padding: 6px 10px; margin-bottom: 6px;
-            background: #AAC0E1;
-            border-left: 3px solid #feca57;
-            border-radius: 4px; cursor: pointer; transition: 0.2s;
+            font-size: 15px; 
+            color: #333; /* 🎨 自己新增的任務文字顏色 */ 
+            padding: 6px 0; /* 拿掉左右的留白，讓文字貼齊邊緣 */
+            margin-bottom: 4px;
+            cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; gap: 8px; /* 讓符號和文字拉開一點距離 */
         }
-        .local-item:hover { text-decoration: line-through; opacity: 0.7; }
+        
+        /* ✨ 小魔術：在文字前面加一個空心圓圈，假裝是打勾框 */
+        .local-item::before {
+            content: "○"; 
+            color: #aaa; /* 🎨 空心圓圈的顏色 */
+            font-size: 16px;
+        }
+
+        /* 🖱️ 滑鼠移過去的特效 */
+        .local-item:hover { 
+            text-decoration: line-through; 
+            color: #aaa; /* 🎨 滑鼠移過去時，文字變淡的顏色 */
+        }
+        
+        /* 🖱️ 滑鼠移過去時，空心圓圈變成打勾符號！ */
+        .local-item:hover::before {
+            content: "✓"; 
+            color: #28a745; /* 🎨 打勾符號的顏色 (綠色) */
+        }
     </style>
 </head>
 <body>

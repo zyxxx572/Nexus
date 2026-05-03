@@ -5,6 +5,12 @@
     <title>Nexus</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- 🍎 1. PWA 與 iOS 專屬：把網頁偽裝成原生 App 的魔法標籤 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nexus">
+    
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     
@@ -22,12 +28,18 @@
             background-color: var(--bg-color); 
             color: var(--text-main); 
             touch-action: manipulation; 
+            /* 🚫 防止 iOS 選取反白，看起來更像 App */
+            -webkit-user-select: none;
+            user-select: none;
         }
 
+        /* 讓輸入框可以正常選取打字 */
         input, textarea { 
             font-size: 16px !important; 
             font-family: inherit; 
             appearance: none; 
+            -webkit-user-select: text;
+            user-select: text;
         }
 
         .flex-input-group {
@@ -71,6 +83,9 @@
         }
 
         #app { padding: 20px; padding-bottom: 80px; }
+        /* 🍎 針對 iPhone 瀏海/動態島的頂部安全距離調整 */
+        #calendar-page { padding-top: env(safe-area-inset-top); }
+        
         h2 { color: var(--primary-dark); }
 
         /* ==========================================
@@ -99,6 +114,8 @@
             position: fixed; bottom: 0; width: 100%; 
             background-color: white; display: flex; 
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
+            /* 🍎 針對 iPhone 底部白條 (Home indicator) 的安全距離 */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         #bottom-nav button {
             flex: 1; padding: 15px 2px; font-size: 13px; 
@@ -161,7 +178,6 @@
         .color-circle { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; }
         .color-circle.selected { border-color: var(--text-main); transform: scale(1.2); }
 
-        /* 回到今天按鈕樣式 (取代原本的提示字) */
         .return-today-btn { font-size: 13px; color: var(--primary-light); font-weight: bold; transition: 0.2s; }
         .return-today-btn:active { opacity: 0.5; }
         
@@ -181,7 +197,6 @@
             <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
                 <span>Rolling Schedule</span>
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <!-- ✨ 刪除提示字，改為動態出現的回到今天按鈕 -->
                     <span class="return-today-btn" id="cal-reset-btn" onclick="resetCalendarOffset()" style="cursor:pointer;"></span>
                     <button onclick="toggleSettingsModal()" style="background:none; border:none; font-size:22px; cursor:pointer; padding:0;">⚙️</button>
                 </div>
@@ -241,7 +256,6 @@
        <section id="weekly-page" class="page" style="display: none;">
             <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
                 Weekly Task
-                <!-- ✨ 刪除提示字，改為動態出現的回到今天按鈕 -->
                 <span class="return-today-btn" id="week-reset-btn" onclick="resetWeeklyOffset()" style="cursor:pointer;"></span>
             </h2>
             <div id="weekly-container"></div>
@@ -354,6 +368,17 @@
     </div>
 
     <script>
+        // ==========================================
+        // 🍎 PWA: 喚醒 Service Worker
+        // ==========================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker 喚醒成功！'))
+                    .catch(err => console.log('Service Worker 失敗：', err));
+            });
+        }
+
         // ==========================================
         // 🌟 自訂視窗系統 
         // ==========================================
@@ -541,7 +566,6 @@
                 calendarBody.appendChild(cell);
             }
             
-            // ✨ 平常隱藏文字，滑走後才出現「回到今天」
             document.getElementById('cal-reset-btn').innerText = calendarOffsetWeeks === 0 ? "" : "🔄 回到今天";
         }
 
@@ -673,7 +697,6 @@
                 container.innerHTML += cardHTML;
             }
             
-            // ✨ 平常隱藏文字，滑走後才出現「回到今天」
             document.getElementById('week-reset-btn').innerText = weeklyOffsetWeeks === 0 ? "" : "🔄 回到今天";
         }
 

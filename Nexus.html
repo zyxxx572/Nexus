@@ -5,8 +5,9 @@
     <title>Nexus</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <link rel="icon" type="image/png" href="icon.png.PNG">
-    <link rel="apple-touch-icon" href="icon.png.PNG">
+    <!-- 你的圖標設定 -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     
     <style>
         /* ==========================================
@@ -21,17 +22,15 @@
             font-family: sans-serif; 
             background-color: var(--bg-color); 
             color: var(--text-main); 
-            touch-action: manipulation; /* 🚫 禁用雙擊放大，防止畫面亂跑 */
+            touch-action: manipulation; 
         }
 
-        /* 🍏 iOS 救星：所有輸入框字體強制 16px，絕對不自動放大！ */
         input, textarea { 
             font-size: 16px !important; 
             font-family: inherit; 
-            appearance: none; /* 移除 iOS 預設樣式，讓寬度計算更精準 */
+            appearance: none; 
         }
 
-        /* 完美解決輸入框凸出的 Flex 佈局專用 Class */
         .flex-input-group {
             display: flex;
             width: 100%;
@@ -40,14 +39,14 @@
         .flex-input-group input {
             flex: 1 1 auto;
             min-width: 0;
-            width: 0; /* 🍏 這是讓輸入框乖乖縮小、不擠飛按鈕的終極魔法 */
+            width: 0; 
             padding: 10px;
             border-radius: 8px;
             border: 1px solid var(--accent-sand);
             background: #f9f9f9;
         }
         .flex-input-group button {
-            flex: 0 0 auto; /* 絕對不縮小 */
+            flex: 0 0 auto; 
             white-space: nowrap;
             background: var(--primary-dark);
             color: white;
@@ -180,8 +179,12 @@
        <!-- ================= 第一頁：行事曆 ================= -->
        <section id="calendar-page" class="page" style="display:block;">
             <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
-                Rolling Schedule 
-                <span class="swipe-hint-text" id="cal-reset-btn" onclick="resetCalendarOffset()" style="cursor:pointer;">👈 左右滑動切換</span>
+                <span>Rolling Schedule</span>
+                <!-- ✨ 右上角的設定/備份齒輪 -->
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="swipe-hint-text" id="cal-reset-btn" onclick="resetCalendarOffset()" style="cursor:pointer;">👈 滑動切換</span>
+                    <button onclick="toggleSettingsModal()" style="background:none; border:none; font-size:22px; cursor:pointer; padding:0;">⚙️</button>
+                </div>
             </h2>
             
             <div class="calendar-grid">
@@ -258,7 +261,6 @@
             
             <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--accent-sand);">
                 <label style="display: block; margin-bottom: 10px; font-weight: bold; color: var(--text-sub);">新增複習科目：</label>
-                <!-- 🎯 這裡套用了防彈版的 flex-input-group -->
                 <div class="flex-input-group">
                     <input type="text" id="new-subject-input" placeholder="輸入科目名稱...">
                     <button onclick="addSubject()">新增</button>
@@ -282,7 +284,6 @@
                     <div id="detail-progress-bar" style="width: 0%; background: var(--primary-light); height: 10px; border-radius: 10px; transition: 0.4s;"></div>
                 </div>
             </div>
-            <!-- 🎯 這裡套用了防彈版的 flex-input-group -->
             <div class="flex-input-group" style="margin-bottom: 15px;">
                 <input type="text" id="new-task-input" placeholder="輸入複習進度...">
                 <button onclick="addTaskToSubject()">新增</button>
@@ -290,7 +291,7 @@
             <div id="subject-task-list"></div>
         </section>
 
-        <!-- ================= 🌟 第五頁：備忘錄/日記 ================= -->
+        <!-- ================= 第五頁：備忘錄/日記 ================= -->
         <section id="memo-page" class="page" style="display:none;">
             <h2 style="margin-top:0;">Diary & Memos</h2>
             
@@ -336,9 +337,24 @@
         </div>
     </div>
 
+    <!-- ✨ 備份與還原設定彈窗 -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center;">
+            <h3 style="margin-top: 0; color: var(--text-main); margin-bottom: 10px;">⚙️ 資料備份與設定</h3>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.5;">為了防止系統更新或清除快取導致資料遺失，請定期匯出備份檔案。</p>
+            
+            <button onclick="exportBackup()" style="width: 100%; padding: 12px; margin-bottom: 10px; background: var(--primary-dark); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📥 匯出備份檔 (.json)</button>
+            
+            <button onclick="document.getElementById('import-file').click()" style="width: 100%; padding: 12px; margin-bottom: 20px; background: var(--primary-light); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">📤 還原備份資料</button>
+            <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importBackup(event)">
+            
+            <button onclick="toggleSettingsModal()" style="width: 100%; padding: 10px; background: #eee; color: #555; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">關閉</button>
+        </div>
+    </div>
+
     <script>
         // ==========================================
-        // 🌟 核心引擎：自訂視窗系統 
+        // 🌟 自訂視窗系統 
         // ==========================================
         let confirmCallback = null;
         function showConfirm(msg, callback) {
@@ -360,6 +376,68 @@
         }
         function closePrompt() { document.getElementById('custom-prompt-modal').style.display = 'none'; promptCallback = null; }
         function executePrompt() { const val = document.getElementById('prompt-input').value; if (promptCallback) promptCallback(val); closePrompt(); }
+
+        // ==========================================
+        // ✨ 新增：資料備份與還原功能
+        // ==========================================
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.style.display = (modal.style.display === 'none' || modal.style.display === '') ? 'flex' : 'none';
+        }
+
+        // 匯出功能 (下載成 .json 檔案)
+        function exportBackup() {
+            const backupData = {
+                nexusTasks: localStorage.getItem("nexusTasks"),
+                nexusLocalTasks: localStorage.getItem("nexusLocalTasks"),
+                nexusExamSubjects: localStorage.getItem("nexusExamSubjects"),
+                nexusMemos: localStorage.getItem("nexusMemos"),
+                examDate: localStorage.getItem("examDate")
+            };
+            
+            const dataStr = JSON.stringify(backupData);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            // 檔名會自動加上今天的日期
+            const date = new Date();
+            const dateString = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
+            a.download = `Nexus_Backup_${dateString}.json`;
+            
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            toggleSettingsModal();
+            setTimeout(() => alert("✅ 備份檔已下載！請妥善保存於手機的「檔案」App中。"), 500);
+        }
+
+        // 還原功能 (讀取 .json 檔案)
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    // 覆蓋寫入 LocalStorage
+                    if(importedData.nexusTasks) localStorage.setItem("nexusTasks", importedData.nexusTasks);
+                    if(importedData.nexusLocalTasks) localStorage.setItem("nexusLocalTasks", importedData.nexusLocalTasks);
+                    if(importedData.nexusExamSubjects) localStorage.setItem("nexusExamSubjects", importedData.nexusExamSubjects);
+                    if(importedData.nexusMemos) localStorage.setItem("nexusMemos", importedData.nexusMemos);
+                    if(importedData.examDate) localStorage.setItem("examDate", importedData.examDate);
+
+                    alert("🎉 資料還原成功！系統即將重新載入。");
+                    location.reload(); // 強制重新載入頁面，讓資料完整刷新
+                } catch(err) {
+                    alert("❌ 備份檔格式錯誤或損毀，無法還原！");
+                }
+            };
+            reader.readAsText(file);
+        }
 
         // ==========================================
         // 1. 全域變數與啟動
@@ -521,7 +599,6 @@
                     card.style.cssText = `background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #E4DCCF; border-left: 6px solid ${task.color};`;
                     
                     const infoDiv = document.createElement('div');
-                    // 加上 word-break: break-word 防禦長文字把卡片撐破
                     infoDiv.innerHTML = `<div style="font-size: 12px; color: #777777; margin-bottom: 4px;">📅 ${dateKey}</div><div style="font-size: 16px; font-weight: 500; word-break: break-word;">${task.text}</div>`;
                     
                     const delBtn = document.createElement('button');

@@ -3,1059 +3,783 @@
 <head>
     <meta charset="UTF-8">
     <title>Nexus</title>
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
+    
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
     
     <style>
-        #splash-screen {
-    /* 1. 基本定位：蓋住全螢幕 */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;  /* 寬度 100% 螢幕寬 */
-    height: 100vh; /* 高度 100% 螢幕高 */
-    
-    /* 2. 背景設定：把你的圖貼上來 */
-    background-color: #0E1118; /* 圖片載入前，先墊一個純黑底 */
-    background-image: url('splash_logo.png'); /* 召喚你的圖片！(檔名必須完全一樣) */
-    background-position: center; /* 讓圖片永遠保持在正中央 */
-    background-repeat: no-repeat; /* 圖片不重複拼貼 */
-    background-size: contain; /* 關鍵魔法：讓圖片自動縮放，保證完整顯示不被切掉 */
-    
-    /* 3. 動畫與圖層 */
-    z-index: 9999; /* 數字設超大，確保它蓋在所有東西最上面 */
-    transition: opacity 0.8s ease; /* 之後讓它淡出消失的動畫時間 */
-}
-
-        
-        /* 讓整個網頁貼齊螢幕，清除預設的白邊 */
-        body {
-            margin: 0;
-            font-family: sans-serif; /* 換個順眼的字體 */
-            background-color: #f5f5f5; /* 給個淡淡的灰底，比較像真實 App */
+        /* ==========================================
+           🛠️ 終極防禦：全域盒模型校正與防放大
+           ========================================== */
+        *, *::before, *::after { 
+            box-sizing: border-box !important; 
         }
 
-        /* 內容區：給四週一點空間，才不會太擠 */
-        #app {
-            padding: 20px;
-            padding-bottom: 80px; /* 重要！底部留白，才不會被導覽列擋住字 */
+        body { 
+            margin: 0; 
+            font-family: sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            touch-action: manipulation; /* 🚫 禁用雙擊放大，防止畫面亂跑 */
         }
 
-        /* 底部導覽列：釘在最下方 */
-        #bottom-nav {
-            position: fixed; /* 釘住不動 */
-            bottom: 0;       /* 釘在最底端 */
-            width: 100%;     /* 寬度跟螢幕一樣寬 */
-            background-color: white;
-            display: flex;   /* 讓裡面的按鈕可以並排放置 */
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); /* 加一點淡淡的陰影，更有立體感 */
+        /* 🍏 iOS 救星：所有輸入框字體強制 16px，絕對不自動放大！ */
+        input, textarea { 
+            font-size: 16px !important; 
+            font-family: inherit; 
+            appearance: none; /* 移除 iOS 預設樣式，讓寬度計算更精準 */
         }
 
-        /* 導覽列裡面的按鈕設定 */
-        #bottom-nav button {
-            flex: 1;         /* 魔法在這裡：讓所有按鈕平均分配寬度！ */
-            padding: 15px 0; /* 把按鈕加高，手機的大拇指才好點 */
-            font-size: 16px; /* 字體放大一點 */
-            border: none;    /* 去掉醜醜的邊框 */
-            background: none;/* 去掉預設的灰色背景 */
+        /* 完美解決輸入框凸出的 Flex 佈局專用 Class */
+        .flex-input-group {
+            display: flex;
+            width: 100%;
+            gap: 10px;
         }
-        /* --- 行事曆方格陣的魔法 --- */
-        .calendar-grid {
-            display: grid; /* 啟動網格系統 */
-            grid-template-columns: repeat(7, 1fr); /* 關鍵：強制切成 7 等份 */
-            gap: 8px; /* 格子之間的空隙 */
-            margin-top: 15px;
-        }
-
-        .weekday {
-            text-align: center;
-            font-size: 12px;
-            color: #888;
-            font-weight: bold;
-        }
-
-       .day-cell {
-            background-color: white;
+        .flex-input-group input {
+            flex: 1 1 auto;
+            min-width: 0;
+            width: 0; /* 🍏 這是讓輸入框乖乖縮小、不擠飛按鈕的終極魔法 */
+            padding: 10px;
             border-radius: 8px;
-            height: 80px; 
-            padding: 7px;
-            font-size: 14px; 
+            border: 1px solid var(--accent-sand);
+            background: #f9f9f9;
+        }
+        .flex-input-group button {
+            flex: 0 0 auto; /* 絕對不縮小 */
+            white-space: nowrap;
+            background: var(--primary-dark);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 8px;
             font-weight: bold;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            /* 🚀 新增：滑鼠移過去變手指，並隱藏超出的內容 */
-            cursor: pointer; 
-            overflow: hidden; 
-            display: flex;
-            flex-direction: column;
-            gap: 4px; /* 元素之間的間距 */
+            cursor: pointer;
         }
 
-        /* 🚀 新增：待辦事項的小標籤設計 */
-        .task-item {
-            background-color: #f0f4f8; /* 淡淡的灰藍色 */
-            color: #333;
-            font-size: 10px; /* 字體縮小，才塞得進格子 */
-            font-weight: normal;
-            padding: 3px 5px;
-            border-radius: 4px;
-            white-space: nowrap; /* 不換行 */
-            overflow: hidden; /* 超出隱藏 */
-            text-overflow: ellipsis; /* 超出的字變成 ... */
+        /* ==========================================
+           🎨 全域與排版設定 (莫蘭迪燕麥色系)
+           ========================================== */
+        :root {
+            --bg-color: #F0EBE3;       
+            --card-bg: #FFFFFF;        
+            --primary-dark: #576F72;   
+            --primary-light: #7D9D9C;  
+            --accent-sand: #E4DCCF;    
+            --danger-red: #B85C5A;     
+            --text-main: #333333;
+            --text-sub: #777777;
         }
-         /* --- 倒數計時儀表板 (白底質感版) --- */
+
+        #app { padding: 20px; padding-bottom: 80px; }
+        h2 { color: var(--primary-dark); }
+
+        /* ==========================================
+           ✨ 啟動畫面
+           ========================================== */
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--primary-dark); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.8s ease; 
+        }
+        .splash-title {
+            color: #FFFFFF; font-size: 48px; font-weight: bold; letter-spacing: 4px;
+            margin: 0; font-family: 'Arial Black', sans-serif;
+            animation: fadeIn 1s ease-in-out; 
+        }
+        .splash-subtitle {
+            color: var(--accent-sand); font-size: 14px; letter-spacing: 2px; margin-top: 10px;
+            font-style: italic; opacity: 0.8;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 導覽列 --- */
+        #bottom-nav {
+            position: fixed; bottom: 0; width: 100%; 
+            background-color: white; display: flex; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        #bottom-nav button {
+            flex: 1; padding: 15px 2px; font-size: 13px; 
+            border: none; background: none; color: var(--text-sub); 
+            font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        #bottom-nav button:hover { color: var(--primary-dark); }
+
+        /* ==========================================
+           🎨 第一頁：行事曆方格陣
+           ========================================== */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
+        .weekday { text-align: center; font-size: 12px; color: var(--text-sub); font-weight: bold; }
+        .day-cell {
+            background-color: var(--card-bg); border-radius: 8px; height: 80px; padding: 7px;
+            font-size: 14px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            cursor: pointer; overflow: hidden; display: flex; flex-direction: column; gap: 4px; border: 2px solid transparent; 
+        }
+
+        /* --- 倒數計時 --- */
         .countdown-box {
-            margin-top: 25px;
-            background-color: #ffffff; /* 改成純白底 */
-            border: 1px solid #e0e0e0; /* 加一圈極細的淺灰邊框 */
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* 陰影調得非常淡，有輕盈感 */
-            cursor: pointer; /* 💡 魔法設定：滑鼠移過去會變手指，暗示它可以點擊！ */
+            margin-top: 25px; background-color: var(--card-bg); border: 1px solid var(--accent-sand);
+            border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; 
         }
+        .countdown-title { font-size: 14px; color: var(--primary-dark); margin-bottom: 10px; letter-spacing: 2px; font-weight: bold; }
+        .countdown-time { font-size: 18px; color: var(--text-sub); }
+        .countdown-time span { font-size: 32px; color: var(--primary-dark); font-weight: bold; margin: 0 4px; }
 
-        .countdown-title {
-            font-size: 14px;
-            color: #007bb5; /* 適合白底的科技感深藍色 */
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-            font-weight: bold;
-        }
-
-        .countdown-time {
-            font-size: 18px;
-            color: #666666; /* 單位文字變成優雅的灰色 */
-        }
-
-        .countdown-time span {
-            font-size: 32px;
-            color: #222222;  /* 數字變成深黑色，對比清晰 */
-            font-weight: bold;
-            margin: 0 4px;
-        }
-
-        /* --- 專屬輸入卡片樣式 --- */
-        .modal-overlay {
-            display: none; /* 預設隱藏 */
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4); /* 半透明黑底，讓背景變暗 */
-            backdrop-filter: blur(3px); /* 背景模糊化，超有質感！ */
-            justify-content: center; align-items: center; z-index: 1000;
-        }
-
-        .modal-content {
-            background: white; padding: 20px; border-radius: 12px; 
-            width: 80%; max-width: 320px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: popIn 0.3s ease-out; /* 彈出動畫 */
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        #task-input {
-            width: 100%; padding: 10px; border: 1px solid #ddd;
-            border-radius: 8px; font-size: 16px; margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-
-        .color-picker { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; }
-        
-        .color-circle {
-            width: 30px; height: 30px; border-radius: 50%; 
-            cursor: pointer; border: 3px solid transparent;
-            transition: transform 0.2s;
-        }
-        
-        /* 被選中時的特效 */
-        .color-circle.selected {
-            border-color: #333; 
-            transform: scale(1.2);
-        }
-
-        .modal-buttons { display: flex; gap: 10px; }
-        .modal-buttons button {
-            flex: 1; padding: 10px; border: none; border-radius: 8px;
-            font-size: 14px; font-weight: bold; cursor: pointer;
-        }
-        .btn-cancel { background: #f1f1f1; color: #666; }
-        .btn-save { background: #007bb5; color: white; }
-
-       /* --- 第二頁：當週事項卡片樣式 (升級版) --- */
+        /* ==========================================
+           🎨 第二頁：當週事項
+           ========================================== */
         .weekly-card {
-            background-color: #fafafa; /* 🎨 平常日子的卡片底色 (極淡的灰白) */
-            border: 1px solid #eaeaea; /* 🎨 卡片外圍淡淡的邊框顏色 */
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-            border-left: 5px solid #AAC0E1; /* 🎨 平常日子卡片「左邊那條粗邊框」的顏色 (淺粉藍色) */
-            transition: transform 0.2s;
+            background-color: var(--card-bg); border: 1px solid var(--accent-sand); border-radius: 12px; padding: 15px; margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); border-left: 6px solid var(--accent-sand); transition: transform 0.2s;
         }
-
-        .weekly-card.today {
-            border-left: 5px solid #007bb5; /* 🎨 「今天」卡片左邊粗邊框的顏色 (亮藍色) */
-            background-color: #0E2F76; /* 🎨 「今天」卡片的顯眼底色 (深海軍藍) */
-        }
-
-        /* 🌟 加碼優化：讓「今天」深色背景上的文字變成白色，不然黑字配深藍底會看不見！ */
-        .weekly-card.today .weekly-date, 
-        .weekly-card.today .local-item {
-            color: #ffffff; /* 🎨 「今天」卡片裡的文字顏色 (純白) */
-            border-bottom-color: rgba(255,255,255,0.2); /* 🎨 「今天」日期的下方分隔線 (半透明白) */
-        }
-
-        .weekly-date {
-            font-weight: bold;
-            color: #555; /* 🎨 平常日子「日期文字」(例: 4/29 星期三) 的顏色 */
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eaeaea; /* 🎨 日期下方分隔線的顏色 */
-            padding-bottom: 8px;
-            display: flex;
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
+        .weekly-card.today { border-left: 6px solid var(--primary-light); background-color: var(--primary-dark); }
+        .weekly-card.today .weekly-date, .weekly-card.today .local-item, .weekly-card.today .weekly-task-item { color: #ffffff !important; border-bottom-color: rgba(255,255,255,0.2); }
+        .weekly-date { font-weight: bold; color: var(--text-sub); margin-bottom: 10px; border-bottom: 1px solid #F0EBE3; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .weekly-task-list { display: flex; flex-direction: column; gap: 8px; }
-        
-        .weekly-task-item { display: flex; align-items: center; font-size: 15px; color: #333; /* 🎨 從行事曆同步過來的任務文字顏色 */ }
-        
-        .weekly-task-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
-        
-        .empty-text { color: #aaa; /* 🎨 「目前無事項」的灰色提示字顏色 */ font-size: 13px; font-style: italic; margin-top: 5px; }
+        .weekly-task-item { display: flex; align-items: center; font-size: 15px; color: var(--text-main); font-weight: bold; }
+        .add-local-btn { background: #F0EBE3; border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; color: var(--text-sub); font-weight: bold; font-size: 16px; display: flex; justify-content: center; align-items: center; }
+        .add-local-btn:hover { background: var(--primary-light); color: white; }
+        .local-task-section { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--accent-sand); }
+        .local-item { font-size: 15px; color: var(--text-main); padding: 6px 0; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .local-item::before { content: "○"; color: var(--primary-light); font-size: 16px; }
+        .local-item:hover { text-decoration: line-through; color: #aaa; }
+        .local-item:hover::before { content: "✓"; color: var(--primary-dark); }
 
-        /* 🚀 新增：第二頁專屬功能的按鈕與便利貼樣式 */
-        .add-local-btn {
-            background: #eee; /* 🎨 右上角「+」號按鈕平常的底色 */
-            border: none; border-radius: 6px;
-            width: 28px; height: 28px; cursor: pointer; 
-            color: #666; /* 🎨 「+」號本身的顏色 */
-            font-weight: bold; font-size: 16px; transition: 0.2s;
-            display: flex; justify-content: center; align-items: center;
+        /* ==========================================
+           🎨 彈出視窗與輸入設定
+           ========================================== */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(3px); justify-content: center; align-items: center; z-index: 2000; 
         }
-        .add-local-btn:hover { 
-            background: #0A1931; /* 🎨 滑鼠移過去「+」號時變成的底色 (深藍) */ 
-            color: white; /* 🎨 滑鼠移過去「+」號時變成的文字顏色 (白) */ 
-        }
-
-        .local-task-section {
-            margin-top: 8px; padding-top: 8px;
-            border-top: 1px dashed #ddd; /* 🎨 分隔行事曆與自己新增事項的「虛線顏色」 */ 
-        }
-
-        /* 🔪 幫你把醜醜的藍色背景跟黃色邊框砍掉了，改成乾淨的文字排版！ */
-        .local-item {
-            font-size: 15px; 
-            color: #333; /* 🎨 自己新增的任務文字顏色 */ 
-            padding: 6px 0; /* 拿掉左右的留白，讓文字貼齊邊緣 */
-            margin-bottom: 4px;
-            cursor: pointer; transition: 0.2s;
-            display: flex; align-items: center; gap: 8px; /* 讓符號和文字拉開一點距離 */
-        }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        /* ✨ 小魔術：在文字前面加一個空心圓圈，假裝是打勾框 */
-        .local-item::before {
-            content: "○"; 
-            color: #aaa; /* 🎨 空心圓圈的顏色 */
-            font-size: 16px;
-        }
+        .color-picker { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; }
+        .color-circle { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.2s; }
+        .color-circle.selected { border-color: var(--text-main); transform: scale(1.2); }
 
-        /* 🖱️ 滑鼠移過去的特效 */
-        .local-item:hover { 
-            text-decoration: line-through; 
-            color: #aaa; /* 🎨 滑鼠移過去時，文字變淡的顏色 */
-        }
+        @keyframes swipeHint { 0% { transform: translateX(0); } 50% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+        .swipe-hint-text { font-size: 12px; color: var(--text-sub); font-weight: normal; animation: swipeHint 2s infinite; }
         
-        /* 🖱️ 滑鼠移過去時，空心圓圈變成打勾符號！ */
-        .local-item:hover::before {
-            content: "✓"; 
-            color: #28a745; /* 🎨 打勾符號的顏色 (綠色) */
-        }
+        .memo-textarea { width: 100%; height: 100px; padding: 12px; border-radius: 8px; border: 1px solid var(--accent-sand); background: #fafafa; resize: none; margin-bottom: 10px; }
+        .memo-textarea:focus { outline: none; border-color: var(--primary-light); }
     </style>
 </head>
 <body>
-    <div id="splash-screen"></div>  
+    <div id="splash-screen">
+        <h1 class="splash-title">NEXUS</h1>
+        <div class="splash-subtitle">Connect your thoughts.</div>
+    </div>  
+    
     <div id="app">
-       <section id="calendar-page">
-            <h2 style="margin-top:0;">Rolling Schedule</h2>
+       <!-- ================= 第一頁：行事曆 ================= -->
+       <section id="calendar-page" class="page" style="display:block;">
+            <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
+                Rolling Schedule 
+                <span class="swipe-hint-text" id="cal-reset-btn" onclick="resetCalendarOffset()" style="cursor:pointer;">👈 左右滑動切換</span>
+            </h2>
             
             <div class="calendar-grid">
                 <div class="weekday">一</div><div class="weekday">二</div><div class="weekday">三</div>
                 <div class="weekday">四</div><div class="weekday">五</div><div class="weekday">六</div><div class="weekday">日</div>
-
                 <div id="calendar-body" style="display: contents;"></div>
             </div>
 
-           
-            <div class="countdown-box"onclick="setNewExamDate()">
-
+            <div class="countdown-box" onclick="setNewExamDate()">
                 <div class="countdown-title">⚡ 距離下次段考</div>
-
                 <div class="countdown-time">
-
                     <span id="cd-days">--</span> 天
-
                     <span id="cd-hours">--</span> 時
-
                     <span id="cd-mins">--</span> 分
-
                 </div>
-
             </div>
         </section>
 
-    <section id="input-page" class="page" style="display:none; padding: 20px;">
-        <h2 style="color: #333; margin-top: 0; margin-bottom: 20px;">Activities</h2>
-        <div id="all-events-list">
-            </div>
+       <!-- ================= 第二頁：活動列表 ================= -->
+        <section id="input-page" class="page" style="display:none;">
+            <h2 style="margin-top: 0; margin-bottom: 20px;">Activities</h2>
+            <div id="all-events-list"></div>
 
-        <button onclick="toggleEventModal()" style="position: fixed; bottom: 90px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: #007bb5; color: white; font-size: 30px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000; line-height: 1;">
-            +
-        </button>
+            <button onclick="toggleEventModal()" style="position: fixed; bottom: 90px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: var(--primary-dark); color: white; font-size: 30px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1000; line-height: 1;">
+                +
+            </button>
 
-        <div id="event-input-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
-            <div style="background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                <button onclick="toggleEventModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer;">✖</button>
-                
-                <h3 style="margin-top: 0; color: #333; margin-bottom: 20px;">新增活動</h3>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">選擇日期：</label>
-                    <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9; box-sizing: border-box;">
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #555;">活動內容：</label>
-                    <textarea id="global-task-input" placeholder="" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; height: 80px; box-sizing: border-box; resize: none;"></textarea>
-                </div>
-                
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #555;"></label>
-                    <div style="display: flex; gap: 15px;">
-                        <div class="color-circle" onclick="selectGlobalColor('#0A1931', this)" style="background:#0A1931; width:30px; height:30px; border-radius:50%; cursor:pointer; border: 2px solid white; box-shadow: 0 0 0 2px #0A1931;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#B3CFE5', this)" style="background:#B3CFE5; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#4A7FA7', this)" style="background:#4A7FA7; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
-                        <div class="color-circle" onclick="selectGlobalColor('#28527A', this)" style="background:#28527A; width:30px; height:30px; border-radius:50%; cursor:pointer;"></div>
+            <div id="event-input-modal" class="modal-overlay">
+                <div class="modal-content">
+                    <button onclick="toggleEventModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 18px; color: var(--text-sub); cursor: pointer;">✖</button>
+                    <h3 style="margin-top: 0; margin-bottom: 20px;">新增活動</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-sub);">選擇日期：</label>
+                        <input type="date" id="global-date-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent-sand); background: #f9f9f9;">
                     </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-sub);">活動內容：</label>
+                        <textarea id="global-task-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent-sand); height: 80px; resize: none;"></textarea>
+                    </div>
+                    
+                    <div class="color-picker">
+                        <div class="color-circle selected" onclick="selectGlobalColor('#576F72', this)" style="background:#576F72;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#7D9D9C', this)" style="background:#7D9D9C;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#609966', this)" style="background:#609966;"></div>
+                        <div class="color-circle" onclick="selectGlobalColor('#495464', this)" style="background:#495464;"></div>
+                    </div>
+                    <button onclick="saveFromInputPage()" style="width: 100%; padding: 12px; background: var(--primary-dark); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">確認新增</button>
                 </div>
-                
-                <button onclick="saveFromInputPage()" style="width: 100%; padding: 12px; background: #0A1931; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">確認新增</button>
             </div>
-        </div>
-    </section>
-       <section id="weekly-page" style="display: none;">
-            <h2 style="margin-top:0;">Weekly Task</h2>
-            
+        </section>
+
+       <!-- ================= 第三頁：本週事務 ================= -->
+       <section id="weekly-page" class="page" style="display: none;">
+            <h2 style="margin-top:0; display:flex; justify-content:space-between; align-items:center;">
+                Weekly Task
+                <span class="swipe-hint-text" id="week-reset-btn" onclick="resetWeeklyOffset()" style="cursor:pointer;">👈 左右滑動切換</span>
+            </h2>
             <div id="weekly-container"></div>
         </section>
+
+       <!-- ================= 第四頁：段考專區 ================= -->
+       <section id="exam-page" class="page" style="display:none;">
+            <h2 style="margin-top:0;">Exam Zone</h2>
+            <div style="background: var(--card-bg); padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--accent-sand);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold;">
+                    <span>總複習進度</span>
+                    <span id="total-progress-text" style="color: var(--primary-dark);">0%</span>
+                </div>
+                <div style="width: 100%; background: #F0EBE3; border-radius: 10px; height: 14px;">
+                    <div id="total-progress-bar" style="width: 0%; background: var(--primary-light); height: 14px; border-radius: 10px; transition: 0.4s;"></div>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--accent-sand);">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold; color: var(--text-sub);">新增複習科目：</label>
+                <!-- 🎯 這裡套用了防彈版的 flex-input-group -->
+                <div class="flex-input-group">
+                    <input type="text" id="new-subject-input" placeholder="輸入科目名稱...">
+                    <button onclick="addSubject()">新增</button>
+                </div>
+            </div> 
+            <div id="subject-list-container"></div>
+        </section>
+
+        <!-- 段考專區 - 詳細內頁 -->
+        <section id="subject-detail-page" class="page" style="display:none;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
+                <button onclick="closeSubjectDetail()" style="background: var(--accent-sand); border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; color: var(--primary-dark); cursor: pointer;">🔙 返回</button>
+                <h2 id="detail-subject-title" style="margin: 0;">科目名稱</h2>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: var(--text-sub);">
+                    <span>本科進度</span>
+                    <span id="detail-progress-text">0%</span>
+                </div>
+                <div style="width: 100%; background: #F0EBE3; border-radius: 10px; height: 10px;">
+                    <div id="detail-progress-bar" style="width: 0%; background: var(--primary-light); height: 10px; border-radius: 10px; transition: 0.4s;"></div>
+                </div>
+            </div>
+            <!-- 🎯 這裡套用了防彈版的 flex-input-group -->
+            <div class="flex-input-group" style="margin-bottom: 15px;">
+                <input type="text" id="new-task-input" placeholder="輸入複習進度...">
+                <button onclick="addTaskToSubject()">新增</button>
+            </div>
+            <div id="subject-task-list"></div>
+        </section>
+
+        <!-- ================= 🌟 第五頁：備忘錄/日記 ================= -->
+        <section id="memo-page" class="page" style="display:none;">
+            <h2 style="margin-top:0;">Diary & Memos</h2>
+            
+            <div style="background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid var(--accent-sand);">
+                <textarea id="new-memo-input" class="memo-textarea" placeholder="今天過得如何？記下一些靈感或心情吧..."></textarea>
+                <div style="text-align: right;">
+                    <button onclick="saveMemo()" style="background: var(--primary-dark); color: white; border: none; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">儲存筆記</button>
+                </div>
+            </div>
+
+            <div id="memo-list-container"></div>
+        </section>
     </div>
 
-   <section id="exam-page" class="page" style="display:none; padding: 20px;">
-        <h2 style="margin-top:0;">Exam Zone</h2>
-        
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
-                <span>總複習進度</span>
-                <span id="total-progress-text">0%</span>
-            </div>
-            <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 14px;">
-                <div id="total-progress-bar" style="width: 0%; background: #4A7FA7; height: 14px; border-radius: 10px; transition: 0.4s;"></div>
-            </div>
-        </div>
-        
-        <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #555;">新增複習科目：</label>
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="new-subject-input" placeholder="" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9;">
-                <button onclick="addSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
-            </div>
-        </div> <div id="subject-list-container"></div>
-    </section>
+    <!-- ================= 導覽列 ================= -->
+    <nav id="bottom-nav">
+        <button onclick="showPage('calendar-page')">行事曆</button>
+        <button onclick="showPage('input-page')">活動列表</button>
+        <button onclick="showPage('weekly-page')">本週事務</button>
+        <button onclick="showPage('exam-page')">段考專區</button>
+        <button onclick="showPage('memo-page')">備忘錄</button>
+    </nav>
 
-    <section id="subject-detail-page" class="page" style="display:none; padding: 20px;">
-        <div style="display: flex; align-items: center; margin-bottom: 20px; gap: 15px;">
-            <button onclick="closeSubjectDetail()" style="background: #f1f1f1; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; color: #333; cursor: pointer;">🔙 返回</button>
-            <h2 id="detail-subject-title" style="color: #333; margin: 0;">科目名稱</h2>
-        </div>
-
-        <div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #555;">
-                <span>本科進度</span>
-                <span id="detail-progress-text">0%</span>
-            </div>
-            <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 10px;">
-                <div id="detail-progress-bar" style="width: 0%; background: #4A7FA7; height: 10px; border-radius: 10px; transition: 0.4s;"></div>
-            </div>
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <input type="text" id="new-task-input" placeholder="" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #f9f9f9;">
-            <button onclick="addTaskToSubject()" style="background: #0A1931; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">新增</button>
-        </div>
-
-        <div id="subject-task-list"></div>
-    </section>
-
-   <nav id="bottom-nav">
-        <button onclick="showPage('calendar')">行事曆</button>
-        <button onclick="showPage('input')">活動列表</button>
-        <button onclick="showPage('weekly')">本週事務</button>
-        <button onclick="showPage('exam')">段考專區</button>
-   </nav>
-
-    <div id="compact-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="padding: 20px; width: 85%; max-width: 300px;">
-            <h3 style="margin-top: 0; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px;">➕ 新增活動</h3>
-            
-            <input type="date" id="compact-date" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box;">
-            
-            <input type="text" id="compact-task" placeholder="輸入活動內容..." autocomplete="off" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box;">
-            
-            <div class="color-picker" style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
-                <div class="color-circle selected" style="background-color: #0A1931;" onclick="selectGlobalColor('#0A1931', this)"></div>
-                <div class="color-circle" style="background-color: #B3CFE5;" onclick="selectGlobalColor('#B3CFE5', this)"></div>
-                <div class="color-circle" style="background-color: #4A7FA7;" onclick="selectGlobalColor('#4A7FA7', this)"></div>
-                <div class="color-circle" style="background-color: #1A3D63;" onclick="selectGlobalColor('#1A3D63', this)"></div>
-            </div>
-
-            <div style="display: flex; gap: 10px;">
-                <button onclick="closeCompactModal()" style="flex: 1; padding: 10px; background: #f1f1f1; color: #666; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">取消</button>
-                <button onclick="saveCompactTask()" style="flex: 1; padding: 10px; background: #007bb5; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">確認</button>
+    <!-- ================= 🌟 專屬客製化彈窗系統 ================= -->
+    <div id="custom-confirm-modal" class="modal-overlay">
+        <div class="modal-content" style="text-align: center;">
+            <h3 id="confirm-msg" style="margin-top: 0; color: var(--text-main); font-size: 16px;">確定要執行此操作嗎？</h3>
+            <div style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+                <button onclick="closeConfirm()" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #eee; color: #555; font-weight: bold; cursor: pointer;">取消</button>
+                <button onclick="executeConfirm()" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--danger-red); color: white; font-weight: bold; cursor: pointer;">確定</button>
             </div>
         </div>
     </div>
-<script>
+
+    <div id="custom-prompt-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="prompt-msg" style="margin-top: 0; color: var(--text-main); font-size: 16px;">請輸入內容</h3>
+            <input type="text" id="prompt-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--accent-sand); margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button onclick="closePrompt()" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #eee; color: #555; font-weight: bold; cursor: pointer;">取消</button>
+                <button onclick="executePrompt()" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--primary-dark); color: white; font-weight: bold; cursor: pointer;">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         // ==========================================
-        // 1. 全域變數 (系統記憶體)
+        // 🌟 核心引擎：自訂視窗系統 
+        // ==========================================
+        let confirmCallback = null;
+        function showConfirm(msg, callback) {
+            document.getElementById('confirm-msg').innerText = msg;
+            document.getElementById('custom-confirm-modal').style.display = 'flex';
+            confirmCallback = callback;
+        }
+        function closeConfirm() { document.getElementById('custom-confirm-modal').style.display = 'none'; confirmCallback = null; }
+        function executeConfirm() { if (confirmCallback) confirmCallback(); closeConfirm(); }
+
+        let promptCallback = null;
+        function showPrompt(msg, defaultValue, callback) {
+            document.getElementById('prompt-msg').innerText = msg;
+            const input = document.getElementById('prompt-input');
+            input.value = defaultValue || '';
+            document.getElementById('custom-prompt-modal').style.display = 'flex';
+            input.focus();
+            promptCallback = callback;
+        }
+        function closePrompt() { document.getElementById('custom-prompt-modal').style.display = 'none'; promptCallback = null; }
+        function executePrompt() { const val = document.getElementById('prompt-input').value; if (promptCallback) promptCallback(val); closePrompt(); }
+
+        // ==========================================
+        // 1. 全域變數與啟動
         // ==========================================
         let countdownInterval; 
         let savedTasks = JSON.parse(localStorage.getItem("nexusTasks")) || {};
-        let currentEditingDate = null; 
-        let selectedTaskColor = '#007bb5'; 
         let localTasks = JSON.parse(localStorage.getItem("nexusLocalTasks")) || {};
+        let examSubjects = JSON.parse(localStorage.getItem('nexusExamSubjects')) || [];
+        let savedMemos = JSON.parse(localStorage.getItem('nexusMemos')) || []; 
+        
+        let globalSelectedColor = '#576F72'; 
+        let currentSubjectIndex = -1; 
+        let calendarOffsetWeeks = 0; 
+        let weeklyOffsetWeeks = 0;
 
-        // ==========================================
-        // 2. 系統啟動設定 (網頁載入時執行)
-        // ==========================================
         window.onload = function() {
-            // 啟動畫面淡出魔法
-            setTimeout(function() {
+            setTimeout(() => {
                 document.getElementById('splash-screen').style.opacity = '0';
-                setTimeout(function() {
-                    document.getElementById('splash-screen').style.display = 'none';
-                }, 800); 
+                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800); 
             }, 2000);
 
-            // 啟動倒數計時器
-            const savedDate = localStorage.getItem("examDate") || "2026-05-20";
-            startCountdown(savedDate);
-
-            // 生成行事曆
-            generateCalendar();
-      
-           //生成每週事務
-          generateWeeklyView();
+            startCountdown(localStorage.getItem("examDate") || "2026-05-20");
             
-          };
+            generateCalendar(); generateWeeklyView(); renderAllEventsList(); renderMemos();
+            setupSwipeDetectors();
+        };
 
         // ==========================================
-        // 3. 段考倒數計時器模組
+        // 2. 手指滑動偵測系統
+        // ==========================================
+        function setupSwipeDetectors() {
+            setupSwipe('calendar-page', () => { calendarOffsetWeeks++; generateCalendar(); }, () => { calendarOffsetWeeks--; generateCalendar(); });
+            setupSwipe('weekly-page', () => { weeklyOffsetWeeks++; generateWeeklyView(); }, () => { weeklyOffsetWeeks--; generateWeeklyView(); });
+        }
+
+        function setupSwipe(elementId, onSwipeLeft, onSwipeRight) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            let touchstartX = 0; let touchendX = 0;
+            el.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
+            el.addEventListener('touchend', e => {
+                touchendX = e.changedTouches[0].screenX;
+                if (touchendX < touchstartX - 50) onSwipeLeft(); 
+                if (touchendX > touchstartX + 50) onSwipeRight(); 
+            }, {passive: true});
+        }
+        function resetCalendarOffset() { calendarOffsetWeeks = 0; generateCalendar(); }
+        function resetWeeklyOffset() { weeklyOffsetWeeks = 0; generateWeeklyView(); }
+
+        // ==========================================
+        // 3. 段考倒數 
         // ==========================================
         function startCountdown(targetDateStr) {
             clearInterval(countdownInterval); 
             const countDownDate = new Date(targetDateStr + "T00:00:00").getTime();
-
             countdownInterval = setInterval(function() {
-                const now = new Date().getTime();
-                const distance = countDownDate - now;
-
+                const distance = countDownDate - new Date().getTime();
                 if (distance > 0) {
-                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-                    document.getElementById("cd-days").innerText = days.toString().padStart(2, '0');
-                    document.getElementById("cd-hours").innerText = hours.toString().padStart(2, '0');
-                    document.getElementById("cd-mins").innerText = minutes.toString().padStart(2, '0');
-                    
-                    document.querySelector(".countdown-title").innerText = "⚡ 距離下次段考";
-                    document.querySelector(".countdown-title").style.color = "#007bb5";
-                } else {
-                    clearInterval(countdownInterval);
-                    document.getElementById("cd-days").innerText = "00";
-                    document.getElementById("cd-hours").innerText = "00";
-                    document.getElementById("cd-mins").innerText = "00";
-                    document.querySelector(".countdown-title").innerText = "🔥段考進行中！";
-                    document.querySelector(".countdown-title").style.color = "#ff4d4d";
+                    document.getElementById("cd-days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+                    document.getElementById("cd-hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+                    document.getElementById("cd-mins").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
                 }
             }, 1000);
         }
-
         function setNewExamDate() {
-            const newDate = prompt("請輸入下次段考日期\n(格式必須是 YYYY-MM-DD)：", "2026-05-20");
-            if (newDate) {
-                if (!isNaN(new Date(newDate).getTime())) {
-                    localStorage.setItem("examDate", newDate); 
-                    startCountdown(newDate); 
-                } else {
-                    alert("日期格式怪怪的喔！請照著 YYYY-MM-DD 的格式輸入。");
+            showPrompt("請輸入下次段考日期 (YYYY-MM-DD)：", "2026-05-20", (newDate) => {
+                if (newDate && !isNaN(new Date(newDate).getTime())) {
+                    localStorage.setItem("examDate", newDate); startCountdown(newDate); 
                 }
-            }
+            });
         }
 
         // ==========================================
-        // 4. 四週滾動日曆生成模組 (已移除點擊刪除功能)
+        // 4. 四週滾動日曆 
         // ==========================================
         function generateCalendar() {
             const calendarBody = document.getElementById('calendar-body');
             calendarBody.innerHTML = ''; 
 
-            const today = new Date();
-            let dayOfWeek = today.getDay();
-            let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            const realToday = new Date(); 
+            const baseDate = new Date();  
+            baseDate.setDate(realToday.getDate() + (calendarOffsetWeeks * 7));
 
-            let startDate = new Date(today);
-            startDate.setDate(today.getDate() - distanceToMonday);
+            let dayOfWeek = baseDate.getDay();
+            let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            let startDate = new Date(baseDate);
+            startDate.setDate(baseDate.getDate() - distanceToMonday);
 
             for (let i = 0; i < 28; i++) {
                 let cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
-                let dateKey = `${cellDate.getFullYear()}-${cellDate.getMonth() + 1}-${cellDate.getDate()}`;
 
                 let cell = document.createElement('div');
                 cell.className = 'day-cell';
-                
                 let dateLabel = document.createElement('div');
                 dateLabel.innerText = `${cellDate.getMonth() + 1}/${cellDate.getDate()}`;
                 cell.appendChild(dateLabel);
 
-                if (cellDate.toDateString() === today.toDateString()) {
-                    cell.style.backgroundColor = '#e0f7fa'; 
-                    cell.style.border = '2px solid #007bb5'; 
-                    dateLabel.style.color = '#007bb5';
+                if (cellDate.toDateString() === realToday.toDateString()) {
+                    cell.style.backgroundColor = '#E4DCCF'; 
+                    cell.style.border = '2px solid #576F72'; 
+                    dateLabel.style.color = '#576F72';
                 }
-
-               // 讀取這天的任務並顯示 (純展示，不可點擊)
-                if (savedTasks[dateKey]) {
-                    savedTasks[dateKey].forEach((taskObj) => {
-                        let taskDiv = document.createElement('div');
-                        taskDiv.className = 'task-item';
-                        
-                        let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
-                        let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
-
-                        taskDiv.innerText = text;
-                        taskDiv.style.color = color;
-                        
-                        cell.appendChild(taskDiv);
-                    });
-                }
-
                 calendarBody.appendChild(cell);
             }
+            document.getElementById('cal-reset-btn').innerText = calendarOffsetWeeks === 0 ? "👈 左右滑動切換 👉" : "🔄 回到今天";
         }
-      //5.
 
-  // ==========================================
-// 活動列表頁面 (新增與總清單)
-// ==========================================
-let globalSelectedColor = '#007bb5'; // 預設顏色
-
-// 1. 讓活動列表能選顏色
-function selectGlobalColor(color, element) {
-    globalSelectedColor = color;
-    document.querySelectorAll('#input-page .color-circle').forEach(el => el.style.border = "none");
-    element.style.border = "2px solid white";
-}
-
-// 2. 儲存功能 (優化：不跳轉，並刷新清單)
-function saveFromInputPage() {
-    let dateVal = document.getElementById('global-date-input').value; // 格式是 YYYY-MM-DD
-    let taskText = document.getElementById('global-task-input').value.trim();
-
-    if (!dateVal || !taskText) {
-        alert("日期和內容都要填喔！");
-        return;
-    }
-
-    // 將日期格式從 2024-05-08 轉成日曆用的 5-8
-    let dateParts = dateVal.split('-');
-    let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
-
-    // 存入資料庫 (savedTasks)
-    if (!savedTasks[dateKey]) {
-        savedTasks[dateKey] = [];
-    }
-    savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
-    localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-
-    // 清空輸入框
-    document.getElementById('global-task-input').value = "";
-    
-    // ✨ 更新所有畫面，並留在這一頁看結果
-    generateCalendar();
-    generateWeeklyView();
-    renderAllEventsList(); // 呼叫下方的新函數來刷新清單
-}
-
-// 3. ✨ 新增：繪製下方所有活動清單 (依日期排序)
-function renderAllEventsList() {
-    const listEl = document.getElementById('all-events-list');
-    if (!listEl) return;
-    listEl.innerHTML = '';
-
-    // 取出所有日期並進行「月、日」排序 (確保 10-1 不會排在 2-1 前面)
-    let sortedKeys = Object.keys(savedTasks).sort((a, b) => {
-        let [m1, d1] = a.split('-').map(Number);
-        let [m2, d2] = b.split('-').map(Number);
-        if (m1 !== m2) return m1 - m2;
-        return d1 - d2;
-    });
-
-    if (sortedKeys.length === 0) {
-        listEl.innerHTML = '<p style="color: #aaa; text-align: center; margin-top: 20px;">目前沒有任何活動喔！</p>';
-        return;
-    }
-
-    // 依照排好的日期把卡片生出來
-    sortedKeys.forEach(dateKey => {
-        savedTasks[dateKey].forEach((task, index) => {
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background: white; 
-                padding: 15px; 
-                border-radius: 10px; 
-                margin-bottom: 10px; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center;
-                border-left: 6px solid ${task.color};
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            `;
-
-            card.innerHTML = `
-                <div>
-                    <div style="font-size: 12px; color: #888; margin-bottom: 4px;">📅 ${dateKey}</div>
-                    <div style="font-size: 16px; color: #333; font-weight: 500;">${task.text}</div>
-                </div>
-                <button onclick="deleteTaskFromList('${dateKey}', ${index})" style="background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; font-weight: bold;">刪除</button>
-            `;
-            listEl.appendChild(card);
-        });
-    });
-}
-
-// 4. ✨ 新增：從清單刪除活動
-function deleteTaskFromList(dateKey, index) {
-    if (confirm("確定要刪除這項活動嗎？")) {
-        savedTasks[dateKey].splice(index, 1);
-        // 如果這天刪到沒活動了，就把這天從資料庫清掉
-        if (savedTasks[dateKey].length === 0) {
-            delete savedTasks[dateKey]; 
-        }
-        localStorage.setItem('nexusTasks', JSON.stringify(savedTasks));
-        
-        // 刪除後重新整理所有畫面
-        renderAllEventsList();
-        generateCalendar();
-        generateWeeklyView();
-    }
-}
-        // --- ✨ 控制彈出視窗開關 ---
-function toggleEventModal() {
-    const modal = document.getElementById('event-input-modal');
-    if (modal.style.display === 'none' || modal.style.display === '') {
-        modal.style.display = 'flex'; // 顯示並置中
-    } else {
-        modal.style.display = 'none'; // 隱藏
-    }
-}
-
-// --- 更新原本的儲存功能 ---
-// (找到你剛剛貼上的 saveFromInputPage()，把最後面補上關閉視窗的代碼)
-function saveFromInputPage() {
-    let dateVal = document.getElementById('global-date-input').value; 
-    let taskText = document.getElementById('global-task-input').value.trim();
-
-    if (!dateVal || !taskText) {
-        alert("日期和內容都要填喔！");
-        return;
-    }
-
-    let dateParts = dateVal.split('-');
-    let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
-
-    if (!savedTasks[dateKey]) {
-        savedTasks[dateKey] = [];
-    }
-    savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
-    localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-
-    document.getElementById('global-task-input').value = "";
-    
-    generateCalendar();
-    generateWeeklyView();
-    renderAllEventsList(); 
-    
-    // ✨ 新增成功後，自動把彈出視窗關掉！
-    toggleEventModal();
-}
-    // --- ✨ 控制彈出視窗開關 ---
-function toggleEventModal() {
-    const modal = document.getElementById('event-input-modal');
-    if (modal.style.display === 'none' || modal.style.display === '') {
-        modal.style.display = 'flex'; // 顯示並置中
-    } else {
-        modal.style.display = 'none'; // 隱藏
-    }
-}
-
-// --- 更新原本的儲存功能 ---
-// (找到你剛剛貼上的 saveFromInputPage()，把最後面補上關閉視窗的代碼)
-function saveFromInputPage() {
-    let dateVal = document.getElementById('global-date-input').value; 
-    let taskText = document.getElementById('global-task-input').value.trim();
-
-    if (!dateVal || !taskText) {
-        alert("日期和內容都要填喔！");
-        return;
-    }
-
-    let dateParts = dateVal.split('-');
-    let dateKey = `${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
-
-    if (!savedTasks[dateKey]) {
-        savedTasks[dateKey] = [];
-    }
-    savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
-    localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-
-    document.getElementById('global-task-input').value = "";
-    
-    generateCalendar();
-    generateWeeklyView();
-    renderAllEventsList(); 
-    
-    // ✨ 新增成功後，自動把彈出視窗關掉！
-    toggleEventModal();
-}
-    
-      // ==========================================
-        // 6. 頁面切換模組
         // ==========================================
-        function showPage(pageName) {
-            // 1. 先把所有頁面都隱藏 (包含新的詳細頁)
-            document.getElementById('calendar-page').style.display = 'none';
-            document.getElementById('input-page').style.display = 'none';
-            document.getElementById('weekly-page').style.display = 'none';
-            document.getElementById('exam-page').style.display = 'none';
-            document.getElementById('subject-detail-page').style.display = 'none'; 
-
-            // 2. 顯示對應的頁面
-            if (pageName === 'calendar') {
-                document.getElementById('calendar-page').style.display = 'block';
-            } else if (pageName === 'input') {
-                document.getElementById('input-page').style.display = 'block';
-                renderAllEventsList();
-            } else if (pageName === 'weekly') {
-                document.getElementById('weekly-page').style.display = 'block';
-            } else if (pageName === 'exam') {
-                // 點擊段考專區時，重置回主畫面
-                currentSubjectIndex = -1;
-                document.getElementById('exam-page').style.display = 'block';
-                renderExamMain();
-            }
+        // 5. 活動列表與儲存 
+        // ==========================================
+        function toggleEventModal() {
+            const modal = document.getElementById('event-input-modal');
+            modal.style.display = (modal.style.display === 'none' || modal.style.display === '') ? 'flex' : 'none';
         }
-   // ==========================================
-        // 7. 當週事項生成與專屬作業模組
+        function selectGlobalColor(color, element) {
+            globalSelectedColor = color;
+            document.querySelectorAll('#event-input-modal .color-circle').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function saveFromInputPage() {
+            let dateVal = document.getElementById('global-date-input').value; 
+            let taskText = document.getElementById('global-task-input').value.trim();
+            if (!dateVal || !taskText) return; 
+
+            let dateParts = dateVal.split('-');
+            let dateKey = `${parseInt(dateParts[0])}-${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
+
+            if (!savedTasks[dateKey]) savedTasks[dateKey] = [];
+            savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
+            localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
+
+            document.getElementById('global-task-input').value = "";
+            toggleEventModal();
+            generateCalendar(); generateWeeklyView(); renderAllEventsList(); 
+        }
+
+        function renderAllEventsList() {
+            const listEl = document.getElementById('all-events-list');
+            listEl.innerHTML = '';
+            
+            let sortedKeys = Object.keys(savedTasks).sort((a, b) => {
+                let [y1, m1, d1] = a.split('-').map(Number);
+                let [y2, m2, d2] = b.split('-').map(Number);
+                if (y1 !== y2) return y1 - y2; 
+                if (m1 !== m2) return m1 - m2; 
+                return d1 - d2;                
+            });
+
+            if (sortedKeys.length === 0) {
+                listEl.innerHTML = '<p style="color: #777777; text-align: center; margin-top: 20px;">目前沒有任何活動喔！</p>';
+                return;
+            }
+
+            sortedKeys.forEach(dateKey => {
+                savedTasks[dateKey].forEach((task, index) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = `background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #E4DCCF; border-left: 6px solid ${task.color};`;
+                    
+                    const infoDiv = document.createElement('div');
+                    // 加上 word-break: break-word 防禦長文字把卡片撐破
+                    infoDiv.innerHTML = `<div style="font-size: 12px; color: #777777; margin-bottom: 4px;">📅 ${dateKey}</div><div style="font-size: 16px; font-weight: 500; word-break: break-word;">${task.text}</div>`;
+                    
+                    const delBtn = document.createElement('button');
+                    delBtn.innerText = '刪除';
+                    delBtn.style.cssText = "background: none; border: none; color: var(--danger-red); cursor: pointer; padding: 5px; font-weight: bold; flex-shrink: 0;";
+                    delBtn.onclick = () => deleteTaskFromList(dateKey, index);
+
+                    card.appendChild(infoDiv);
+                    card.appendChild(delBtn);
+                    listEl.appendChild(card);
+                });
+            });
+        }
+
+        function deleteTaskFromList(dateKey, index) {
+            showConfirm("確定要刪除這項活動嗎？", () => {
+                savedTasks[dateKey].splice(index, 1);
+                if (savedTasks[dateKey].length === 0) delete savedTasks[dateKey]; 
+                localStorage.setItem('nexusTasks', JSON.stringify(savedTasks));
+                renderAllEventsList(); generateCalendar(); generateWeeklyView();
+            });
+        }
+
+        // ==========================================
+        // 6. 本週事務生成 
         // ==========================================
         function generateWeeklyView() {
             const container = document.getElementById('weekly-container');
             if (!container) return; 
             container.innerHTML = ''; 
 
-            const today = new Date();
-            let dayOfWeek = today.getDay();
-            let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            const realToday = new Date();
+            const baseDate = new Date();
+            baseDate.setDate(realToday.getDate() + (weeklyOffsetWeeks * 7));
 
-            let startDate = new Date(today);
-            startDate.setDate(today.getDate() - distanceToMonday);
+            let dayOfWeek = baseDate.getDay();
+            let distanceToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            let startDate = new Date(baseDate);
+            startDate.setDate(baseDate.getDate() - distanceToMonday);
             const weekdays = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
 
             for (let i = 0; i < 7; i++) {
                 let cellDate = new Date(startDate);
                 cellDate.setDate(startDate.getDate() + i);
                 let dateKey = `${cellDate.getFullYear()}-${cellDate.getMonth() + 1}-${cellDate.getDate()}`;
-                
-                let isToday = cellDate.toDateString() === today.toDateString();
+                let isToday = cellDate.toDateString() === realToday.toDateString();
 
-                // 卡片外框與頭部 (包含新增按鈕)
                 let cardHTML = `<div class="weekly-card ${isToday ? 'today' : ''}">
                     <div class="weekly-date">
                         <span>${cellDate.getMonth() + 1}/${cellDate.getDate()} (${weekdays[i]})</span>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            ${isToday ? '<span style="color:#007bb5; font-size:13px;">📌 今天</span>' : ''}
+                            ${isToday ? '<span style="color:#ffffff; font-size:13px; font-weight:normal;">📌 今天</span>' : ''}
                             <button class="add-local-btn" onclick="openLocalInput('${dateKey}')">+</button>
                         </div>
                     </div>
                     <div class="weekly-task-list">`;
 
-                let hasAnyTask = false; // 用來檢查這天是不是完全沒事
-
-                // 區塊 A：第一頁同步過來的大型事項
-                if (savedTasks[dateKey] && savedTasks[dateKey].length > 0) {
-                    hasAnyTask = true;
+                if (savedTasks[dateKey]) {
                     savedTasks[dateKey].forEach(taskObj => {
                         let text = typeof taskObj === 'string' ? taskObj : taskObj.text;
-                        let color = typeof taskObj === 'string' ? '#007bb5' : taskObj.color;
-                        cardHTML += `
-                            <div class="weekly-task-item">
-                                <span style="color: ${color}; font-weight: bold;">${text}</span>
-                            </div>`;
+                        let color = typeof taskObj === 'string' ? '#ffffff' : taskObj.color;
+                        cardHTML += `<div class="weekly-task-item"><span style="color: ${color}; word-break: break-word;">${text}</span></div>`;
                     });
                 }
 
-                // 區塊 B：第二頁專屬的作業/小雜事
                 cardHTML += `<div class="local-task-section">`;
-                if (localTasks[dateKey] && localTasks[dateKey].length > 0) {
-                    hasAnyTask = true;
+                if (localTasks[dateKey]) {
                     localTasks[dateKey].forEach((lt, ltIndex) => {
-                        cardHTML += `
-                            <div class="local-item" onclick="deleteLocalTask('${dateKey}', ${ltIndex})">
-                                ${lt}
-                            </div>`;
+                        cardHTML += `<div class="local-item" onclick="deleteLocalTask('${dateKey}', ${ltIndex})" style="word-break: break-word;">${lt}</div>`;
                     });
                 }
-
-                cardHTML += `</div></div></div>`; // 關閉標籤
-                container.innerHTML += cardHTML; // 丟進畫面
+                cardHTML += `</div></div></div>`; 
+                container.innerHTML += cardHTML;
             }
+            document.getElementById('week-reset-btn').innerText = weeklyOffsetWeeks === 0 ? "👈 左右滑動切換 👉" : "🔄 回到今天";
         }
 
-        // 開啟第二頁專用的輸入框
         function openLocalInput(dateKey) {
-            let task = prompt("新增本週事務：");
-            if (task && task.trim() !== "") {
-                if (!localTasks[dateKey]) localTasks[dateKey] = [];
-                localTasks[dateKey].push(task.trim());
-                localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
-                generateWeeklyView(); // 刷新
-            }
+            showPrompt("新增本週事務：", "", (task) => {
+                if (task && task.trim() !== "") {
+                    if (!localTasks[dateKey]) localTasks[dateKey] = [];
+                    localTasks[dateKey].push(task.trim());
+                    localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
+                    generateWeeklyView(); 
+                }
+            });
         }
-
-        // 點擊刪除第二頁專屬任務
         function deleteLocalTask(dateKey, index) {
-            if (confirm("確定將其刪除?")) {
+            showConfirm("確定要刪除這項事務嗎？", () => {
                 localTasks[dateKey].splice(index, 1);
                 if (localTasks[dateKey].length === 0) delete localTasks[dateKey];
                 localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
-                generateWeeklyView(); // 刷新
-            }
+                generateWeeklyView(); 
+            });
         }
 
-    // ==========================================
-        // 8. 輕量版彈窗控制模組
         // ==========================================
-
-        // 選擇顏色
-        function selectGlobalColor(color, element) {
-            globalSelectedColor = color;
-            document.querySelectorAll('#compact-modal .color-circle').forEach(el => el.classList.remove('selected'));
-            element.classList.add('selected');
-        }
-
-        // 打開彈窗 (加號按下去會執行這個)
-        function openCompactModal() {
-            document.getElementById('compact-modal').style.display = 'flex';
-            
-            // 貼心小功能：一打開自動幫你填好「今天」的日期
-            let today = new Date();
-            let yyyy = today.getFullYear();
-            let mm = String(today.getMonth() + 1).padStart(2, '0');
-            let dd = String(today.getDate()).padStart(2, '0');
-            document.getElementById('compact-date').value = `${yyyy}-${mm}-${dd}`;
-            
-            document.getElementById('compact-task').value = ''; // 清空上次打的字
-        }
-
-        // 關閉彈窗 (取消按下去會執行這個)
-        function closeCompactModal() {
-            document.getElementById('compact-modal').style.display = 'none';
-        }
-
-        // 儲存任務 (確認按下去會執行這個)
-        function saveCompactTask() {
-            let dateVal = document.getElementById('compact-date').value; 
-            let taskText = document.getElementById('compact-task').value.trim();
-
-            if (!dateVal || !taskText) {
-                alert("日期和內容都要填喔！");
-                return;
-            }
-
-            // 將日期轉成系統認得的格式 (例如 5-8)
-            let dateParts = dateVal.split('-');
-            let dateKey = `${parseInt(dateParts[0])}-${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
-
-            // 存入資料庫
-            if (!savedTasks[dateKey]) {
-                savedTasks[dateKey] = [];
-            }
-            savedTasks[dateKey].push({ text: taskText, color: globalSelectedColor });
-            localStorage.setItem("nexusTasks", JSON.stringify(savedTasks));
-
-            // 關閉視窗並重新整理畫面
-            closeCompactModal();
-            generateCalendar();
-            generateWeeklyView();
-        }
-
-  // ==========================================
-        // 9. 段考專區模組 (雙層頁面版)
+        // 7. 段考專區模組 
         // ==========================================
-        let examSubjects = JSON.parse(localStorage.getItem('nexusExamSubjects')) || [];
-        let currentSubjectIndex = -1; // 記錄目前點開哪個科目
+        function saveExamData() { localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects)); }
 
-        function saveExamData() {
-            localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects));
-        }
-
-        // --- 1. 主畫面功能 ---
         function addSubject() {
             let input = document.getElementById('new-subject-input');
             let text = input.value.trim();
             if (text) {
-                // 新增科目時，自帶一個空的任務清單
                 examSubjects.push({ name: text, tasks: [], note: '' });
-                input.value = '';
-                saveExamData();
-                renderExamMain();
+                input.value = ''; saveExamData(); renderExamMain();
             }
         }
 
         function renderExamMain() {
             let container = document.getElementById('subject-list-container');
-            if (!container) return;
-            container.innerHTML = '';
-            
+            if (!container) return; container.innerHTML = '';
             examSubjects.forEach((subject, index) => {
                 let subjTotal = subject.tasks ? subject.tasks.length : 0;
                 let subjDone = subject.tasks ? subject.tasks.filter(t => t.done).length : 0;
                 let subjPercent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
                 
                 let card = document.createElement('div');
-                card.style.cssText = "background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #0A1931;";
-                
+                card.style.cssText = "background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #E4DCCF; border-left: 5px solid #576F72;";
                 card.innerHTML = `
                     <div style="cursor: pointer;" onclick="openSubjectDetail(${index})">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #333;">
-                            <span style="font-size: 16px;">${subject.name}</span>
-                            <span style="color: #4A7FA7; font-size: 16px;">${subjPercent}%</span>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold;">
+                            <span style="font-size: 16px; word-break: break-word;">${subject.name}</span>
+                            <span style="color: #7D9D9C; font-size: 16px;">${subjPercent}%</span>
                         </div>
-                        <div style="width: 100%; background: #e9ecef; border-radius: 10px; height: 8px; margin-bottom: 15px;">
-                            <div style="width: ${subjPercent}%; background: #4A7FA7; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
+                        <div style="width: 100%; background: #F0EBE3; border-radius: 10px; height: 8px; margin-bottom: 15px;">
+                            <div style="width: ${subjPercent}%; background: #7D9D9C; height: 8px; border-radius: 10px; transition: 0.4s;"></div>
                         </div>
                     </div>
-                    
-                    <input type="text" placeholder="" value="${subject.note || ''}" onchange="updateSubjectNote(${index}, this.value)" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd; background: #fafafa; box-sizing: border-box; font-size: 14px; color: #555;">
-                    <div style="text-align: right;">
-                        <button onclick="deleteSubject(${index})" style="padding: 6px 12px; background: #f8d7da; border: none; color: #721c24; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 12px;">刪除科目</button>
-                    </div>
+                    <input type="text" placeholder="備註..." value="${subject.note || ''}" onchange="updateSubjectNote(${index}, this.value)" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #E4DCCF; background: #fafafa; font-size: 16px; color: #777777;">
+                    <div style="text-align: right;"><button onclick="deleteSubject(${index})" style="padding: 6px 12px; background: transparent; border: 1px solid var(--danger-red); color: var(--danger-red); font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 12px;">刪除科目</button></div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function updateSubjectNote(index, text) {
-            examSubjects[index].note = text;
-            saveExamData();
+        function updateSubjectNote(index, text) { examSubjects[index].note = text; saveExamData(); }
+        
+        function deleteSubject(index) { 
+            showConfirm("確定要刪除整個科目進度嗎？", () => {
+                examSubjects.splice(index, 1); saveExamData(); renderExamMain(); 
+            });
         }
 
-        function deleteSubject(index) {
-            if (confirm("確定要刪除整個科目進度嗎？")) {
-                examSubjects.splice(index, 1);
-                saveExamData();
-                renderExamMain();
-            }
-        }
-
-        // --- 2. 詳細畫面切換 ---
-        function openSubjectDetail(index) {
-            currentSubjectIndex = index;
-            document.getElementById('exam-page').style.display = 'none';
-            document.getElementById('subject-detail-page').style.display = 'block';
-            renderSubjectDetail();
-        }
-
-        function closeSubjectDetail() {
-            currentSubjectIndex = -1;
-            document.getElementById('subject-detail-page').style.display = 'none';
-            document.getElementById('exam-page').style.display = 'block';
-            renderExamMain(); // 回到主畫面時重新計算進度
-        }
-
-        // --- 3. 詳細畫面內的小任務邏輯 ---
+        function openSubjectDetail(index) { currentSubjectIndex = index; document.getElementById('exam-page').style.display = 'none'; document.getElementById('subject-detail-page').style.display = 'block'; renderSubjectDetail(); }
+        function closeSubjectDetail() { currentSubjectIndex = -1; document.getElementById('subject-detail-page').style.display = 'none'; document.getElementById('exam-page').style.display = 'block'; renderExamMain(); }
         function addTaskToSubject() {
-            let input = document.getElementById('new-task-input');
-            let text = input.value.trim();
+            let input = document.getElementById('new-task-input'); let text = input.value.trim();
             if (text && currentSubjectIndex !== -1) {
                 if (!examSubjects[currentSubjectIndex].tasks) examSubjects[currentSubjectIndex].tasks = [];
                 examSubjects[currentSubjectIndex].tasks.push({ text: text, done: false });
-                input.value = '';
-                saveExamData();
-                renderSubjectDetail();
+                input.value = ''; saveExamData(); renderSubjectDetail();
             }
         }
-
-        function toggleSubjectTask(taskIndex) {
-            let task = examSubjects[currentSubjectIndex].tasks[taskIndex];
-            task.done = !task.done;
-            saveExamData();
-            renderSubjectDetail();
-        }
-
-        function deleteSubjectTask(taskIndex) {
-            examSubjects[currentSubjectIndex].tasks.splice(taskIndex, 1);
-            saveExamData();
-            renderSubjectDetail();
-        }
-
+        function toggleSubjectTask(taskIndex) { examSubjects[currentSubjectIndex].tasks[taskIndex].done = !examSubjects[currentSubjectIndex].tasks[taskIndex].done; saveExamData(); renderSubjectDetail(); }
+        function deleteSubjectTask(taskIndex) { examSubjects[currentSubjectIndex].tasks.splice(taskIndex, 1); saveExamData(); renderSubjectDetail(); }
         function renderSubjectDetail() {
             if (currentSubjectIndex === -1) return;
-            let subject = examSubjects[currentSubjectIndex];
-            document.getElementById('detail-subject-title').innerText = subject.name;
-
-            let listEl = document.getElementById('subject-task-list');
-            listEl.innerHTML = '';
-            
-            let subjTotal = subject.tasks ? subject.tasks.length : 0;
-            let subjDone = 0;
-
+            let subject = examSubjects[currentSubjectIndex]; document.getElementById('detail-subject-title').innerText = subject.name;
+            let listEl = document.getElementById('subject-task-list'); listEl.innerHTML = '';
+            let subjTotal = subject.tasks ? subject.tasks.length : 0; let subjDone = 0;
             if (subject.tasks) {
                 subject.tasks.forEach((task, index) => {
                     if (task.done) subjDone++;
                     let div = document.createElement('div');
-                    div.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; border: 1px solid #eee;";
+                    div.style.cssText = "display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #fff; margin-bottom: 10px; border-radius: 8px; border: 1px solid #E4DCCF;";
                     div.innerHTML = `
-                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1;">
-                            <input type="checkbox" onchange="toggleSubjectTask(${index})" ${task.done ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
-                            <span style="font-size: 15px; text-decoration: ${task.done ? 'line-through' : 'none'}; color: ${task.done ? '#aaa' : '#333'};">${task.text}</span>
+                        <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; min-width: 0;">
+                            <input type="checkbox" onchange="toggleSubjectTask(${index})" ${task.done ? 'checked' : ''} style="width: 18px; height: 18px; flex-shrink: 0; cursor: pointer;">
+                            <span style="font-size: 15px; text-decoration: ${task.done ? 'line-through' : 'none'}; color: ${task.done ? '#aaa' : '#333333'}; white-space: normal; word-break: break-all;">${task.text}</span>
                         </label>
-                        <button onclick="deleteSubjectTask(${index})" style="background: transparent; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 5px;">✖</button>
+                        <button onclick="deleteSubjectTask(${index})" style="background: transparent; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 5px; flex-shrink: 0;">✖</button>
                     `;
                     listEl.appendChild(div);
                 });
             }
-
             let percent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
             document.getElementById('detail-progress-text').innerText = `${percent}%`;
             document.getElementById('detail-progress-bar').style.width = `${percent}%`;
         }
+
+        // ==========================================
+        // 🌟 8. 備忘錄/日記系統 
+        // ==========================================
+        function saveMemo() {
+            const input = document.getElementById('new-memo-input');
+            const text = input.value.trim();
+            if (text) {
+                const now = new Date();
+                const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+                
+                savedMemos.unshift({ text: text, time: timeStr, id: Date.now() });
+                localStorage.setItem('nexusMemos', JSON.stringify(savedMemos));
+                
+                input.value = ''; 
+                renderMemos(); 
+            }
+        }
+
+        function renderMemos() {
+            const container = document.getElementById('memo-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (savedMemos.length === 0) {
+                container.innerHTML = '<p style="color: #777777; text-align: center; margin-top: 20px;">目前沒有任何筆記喔！隨手記點什麼吧。</p>';
+                return;
+            }
+
+            savedMemos.forEach((memo, index) => {
+                const card = document.createElement('div');
+                card.style.cssText = "background: white; padding: 15px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #E4DCCF; border-left: 4px solid #7D9D9C;";
+                
+                const header = document.createElement('div');
+                header.style.cssText = "font-size: 12px; color: #777777; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;";
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.innerText = `🕒 ${memo.time}`;
+                
+                const delBtn = document.createElement('button');
+                delBtn.innerText = '刪除';
+                delBtn.style.cssText = "background:none; border:none; color:var(--danger-red); cursor:pointer; font-size:12px; padding:0; font-weight:bold;";
+                
+                delBtn.onclick = () => {
+                    showConfirm("確定要刪除這則備忘錄嗎？", () => {
+                        savedMemos.splice(index, 1);
+                        localStorage.setItem('nexusMemos', JSON.stringify(savedMemos));
+                        renderMemos();
+                    });
+                }; 
+                
+                header.appendChild(timeSpan);
+                header.appendChild(delBtn);
+
+                const content = document.createElement('div');
+                content.style.cssText = "font-size: 15px; color: #333333; line-height: 1.6; white-space: pre-wrap; word-break: break-word;";
+                content.innerText = memo.text; 
+
+                card.appendChild(header);
+                card.appendChild(content);
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 9. 頁面切換控制 
+        // ==========================================
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+            document.getElementById(pageId).style.display = 'block';
+            
+            if (pageId === 'input-page') renderAllEventsList();
+            if (pageId === 'exam-page') renderExamMain();
+            if (pageId === 'memo-page') renderMemos();
+            window.scrollTo(0, 0); 
+        }
+
     </script>
 </body>
 </html>

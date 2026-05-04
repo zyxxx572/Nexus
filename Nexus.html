@@ -5,13 +5,11 @@
     <title>Nexus</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 🍎 PWA 與 iOS 專屬：把網頁偽裝成原生 App 的魔法標籤 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Nexus">
     
-    <!-- ✨ 檔名已更新為雙重副檔名版 -->
     <link rel="icon" type="image/png" href="icon.png.PNG?v=2">
     <link rel="apple-touch-icon" href="icon.png.PNG?v=2">
     
@@ -156,10 +154,15 @@
         .add-local-btn { background: #F0EBE3; border: none; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; color: var(--text-sub); font-weight: bold; font-size: 16px; display: flex; justify-content: center; align-items: center; }
         .add-local-btn:hover { background: var(--primary-light); color: white; }
         .local-task-section { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--accent-sand); }
-        .local-item { font-size: 15px; color: var(--text-main); padding: 6px 0; margin-bottom: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .local-item::before { content: "○"; color: var(--primary-light); font-size: 16px; }
-        .local-item:hover { text-decoration: line-through; color: #aaa; }
-        .local-item:hover::before { content: "✓"; color: var(--primary-dark); }
+        
+        /* ✨ 新版 local-item 樣式，分離點擊完成和刪除 */
+        .local-item-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .local-item { font-size: 15px; color: var(--text-main); padding: 4px 0; cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+        .local-item.done { text-decoration: line-through; color: #aaa; }
+        .local-item.done::before { content: "✓"; color: var(--primary-dark); }
+        .local-item:not(.done)::before { content: "○"; color: var(--primary-light); font-size: 16px; }
+        .delete-local-btn { background: none; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 4px 8px; flex-shrink: 0; }
+        .delete-local-btn:hover { color: var(--danger-red); }
 
         /* ==========================================
            🎨 彈出視窗與輸入設定
@@ -480,6 +483,15 @@
 
             startCountdown(localStorage.getItem("examDate") || "2026-05-20");
             
+            // 如果舊版資料是純字串陣列，把它轉換成新版的物件格式 {text: '任務', done: false}
+            Object.keys(localTasks).forEach(dateKey => {
+                localTasks[dateKey] = localTasks[dateKey].map(task => {
+                    if (typeof task === 'string') return { text: task, done: false };
+                    return task;
+                });
+            });
+            localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
+
             generateCalendar(); generateWeeklyView(); renderAllEventsList(); renderMemos();
             setupSwipeDetectors();
         };
@@ -643,7 +655,7 @@
         }
 
         // ==========================================
-        // 6. 本週事務生成 
+        // ✨ 6. 本週事務生成 (全新改進版 UI)
         // ==========================================
         function generateWeeklyView() {
             const container = document.getElementById('weekly-container');
@@ -686,8 +698,16 @@
 
                 cardHTML += `<div class="local-task-section">`;
                 if (localTasks[dateKey]) {
-                    localTasks[dateKey].forEach((lt, ltIndex) => {
-                        cardHTML += `<div class="local-item" onclick="deleteLocalTask('${dateKey}', ${ltIndex})" style="word-break: break-word;">${lt}</div>`;
+                    localTasks[dateKey].forEach((taskObj, ltIndex) => {
+                        let isDone = taskObj.done ? 'done' : '';
+                        // ✨ 分離完成與刪除按鈕
+                        cardHTML += `
+                            <div class="local-item-container">
+                                <div class="local-item ${isDone}" onclick="toggleLocalTask('${dateKey}', ${ltIndex})" style="word-break: break-word;">
+                                    ${taskObj.text}
+                                </div>
+                                <button class="delete-local-btn" onclick="deleteLocalTask('${dateKey}', ${ltIndex})">✖</button>
+                            </div>`;
                     });
                 }
                 cardHTML += `</div></div></div>`; 
@@ -701,12 +721,21 @@
             showPrompt("新增本週事務：", "", (task) => {
                 if (task && task.trim() !== "") {
                     if (!localTasks[dateKey]) localTasks[dateKey] = [];
-                    localTasks[dateKey].push(task.trim());
+                    // 存成物件格式以紀錄完成狀態
+                    localTasks[dateKey].push({ text: task.trim(), done: false });
                     localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
                     generateWeeklyView(); 
                 }
             });
         }
+        
+        // ✨ 新增：切換任務完成/未完成狀態
+        function toggleLocalTask(dateKey, index) {
+            localTasks[dateKey][index].done = !localTasks[dateKey][index].done;
+            localStorage.setItem("nexusLocalTasks", JSON.stringify(localTasks));
+            generateWeeklyView(); 
+        }
+
         function deleteLocalTask(dateKey, index) {
             showConfirm("確定要刪除這項事務嗎？", () => {
                 localTasks[dateKey].splice(index, 1);
@@ -717,9 +746,26 @@
         }
 
         // ==========================================
-        // 7. 段考專區模組 
+        // ✨ 7. 段考專區模組 (修復總進度條罷工問題)
         // ==========================================
         function saveExamData() { localStorage.setItem('nexusExamSubjects', JSON.stringify(examSubjects)); }
+
+        // 計算並更新全域大進度條
+        function updateTotalProgressBar() {
+            let totalTasks = 0;
+            let totalDone = 0;
+            
+            examSubjects.forEach(subject => {
+                if (subject.tasks) {
+                    totalTasks += subject.tasks.length;
+                    totalDone += subject.tasks.filter(t => t.done).length;
+                }
+            });
+
+            let globalPercent = totalTasks === 0 ? 0 : Math.round((totalDone / totalTasks) * 100);
+            document.getElementById('total-progress-text').innerText = `${globalPercent}%`;
+            document.getElementById('total-progress-bar').style.width = `${globalPercent}%`;
+        }
 
         function addSubject() {
             let input = document.getElementById('new-subject-input');
@@ -733,6 +779,10 @@
         function renderExamMain() {
             let container = document.getElementById('subject-list-container');
             if (!container) return; container.innerHTML = '';
+            
+            // 每次渲染主畫面時，順便更新上方的大進度條
+            updateTotalProgressBar();
+
             examSubjects.forEach((subject, index) => {
                 let subjTotal = subject.tasks ? subject.tasks.length : 0;
                 let subjDone = subject.tasks ? subject.tasks.filter(t => t.done).length : 0;
@@ -777,6 +827,7 @@
         }
         function toggleSubjectTask(taskIndex) { examSubjects[currentSubjectIndex].tasks[taskIndex].done = !examSubjects[currentSubjectIndex].tasks[taskIndex].done; saveExamData(); renderSubjectDetail(); }
         function deleteSubjectTask(taskIndex) { examSubjects[currentSubjectIndex].tasks.splice(taskIndex, 1); saveExamData(); renderSubjectDetail(); }
+        
         function renderSubjectDetail() {
             if (currentSubjectIndex === -1) return;
             let subject = examSubjects[currentSubjectIndex]; document.getElementById('detail-subject-title').innerText = subject.name;
@@ -800,6 +851,9 @@
             let percent = subjTotal === 0 ? 0 : Math.round((subjDone / subjTotal) * 100);
             document.getElementById('detail-progress-text').innerText = `${percent}%`;
             document.getElementById('detail-progress-bar').style.width = `${percent}%`;
+            
+            // 在內頁勾選時，也要順便更新外面的大進度條資料
+            updateTotalProgressBar();
         }
 
         // ==========================================
